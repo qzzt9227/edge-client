@@ -1,0 +1,65 @@
+# Project-local references and work data
+/gui-example.png
+/tasks/
+/run/
+/logs/
+/docs/
+/.codex/
+/.agents/
+
+# Gradle and build output
+/.gradle/
+/build/
+/out/
+/classes/
+/bin/
+
+# IntelliJ IDEA
+/.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+/.settings/
+/.metadata/
+*.launch
+.classpath
+.project
+.factorypath
+
+# Visual Studio Code
+/.vscode/
+
+# Runtime and crash output
+/crash-reports/
+/debug/
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
+*.log
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+local.properties
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary and backup files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~

@@ -1,0 +1,11 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "io.qzz.iie.mixin",
+	"client": [
+		"HudMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
