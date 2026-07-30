@@ -70,6 +70,18 @@ public final class AutoLibrarianLogicContract {
 		);
 		check(
 			RecoveryFlow.next(
+				RecoveryFlow.Phase.WAIT_DROP,
+				false,
+				true,
+				true,
+				true,
+				false,
+				false
+			) == RecoveryFlow.Phase.MOVE_TO_DROP,
+			"a reachable drop found on the final search tick must be collected"
+		);
+		check(
+			RecoveryFlow.next(
 				RecoveryFlow.Phase.MOVE_TO_DROP,
 				false,
 				false,
@@ -89,8 +101,20 @@ public final class AutoLibrarianLogicContract {
 				false,
 				false,
 				false
+			) == RecoveryFlow.Phase.WAIT_DROP,
+			"a vanished target must be rescanned even on the final pickup tick"
+		);
+		check(
+			RecoveryFlow.next(
+				RecoveryFlow.Phase.WAIT_DROP,
+				false,
+				true,
+				false,
+				false,
+				false,
+				false
 			) == RecoveryFlow.Phase.PICKUP_FAILED,
-			"pickup timeout must fail instead of returning empty-handed"
+			"search timeout without a lectern drop must fail"
 		);
 		check(
 			RecoveryFlow.next(

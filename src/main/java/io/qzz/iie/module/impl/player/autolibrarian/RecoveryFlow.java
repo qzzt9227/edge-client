@@ -25,18 +25,14 @@ public final class RecoveryFlow {
 				: timerExpired ? Phase.WAIT_DROP : phase;
 			case WAIT_DROP -> inventoryRestored
 				? Phase.RETURN_TO_ORIGIN
-				: timerExpired
-					? Phase.PICKUP_FAILED
-					: targetAvailable && targetReachable
-						? Phase.MOVE_TO_DROP
-						: phase;
+				: targetAvailable && targetReachable
+					? Phase.MOVE_TO_DROP
+					: timerExpired ? Phase.PICKUP_FAILED : phase;
 			case MOVE_TO_DROP -> inventoryRestored
 				? Phase.RETURN_TO_ORIGIN
-				: timerExpired
-					? Phase.PICKUP_FAILED
-					: !targetAvailable || !targetReachable
-						? Phase.WAIT_DROP
-						: phase;
+				: !targetAvailable || !targetReachable
+					? Phase.WAIT_DROP
+					: timerExpired ? Phase.PICKUP_FAILED : phase;
 			case RETURN_TO_ORIGIN -> atOrigin ? Phase.AFTER_BREAK : phase;
 			case AFTER_BREAK, PICKUP_FAILED, STOP -> phase;
 		};

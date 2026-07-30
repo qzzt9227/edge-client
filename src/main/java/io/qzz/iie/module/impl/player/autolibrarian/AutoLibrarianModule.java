@@ -8,7 +8,6 @@ import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.setting.BooleanSetting;
 import io.qzz.iie.setting.DoubleSetting;
 import io.qzz.iie.setting.KeybindSetting;
-import net.minecraft.network.chat.Component;
 
 import java.util.Objects;
 
@@ -210,9 +209,6 @@ public final class AutoLibrarianModule extends Module {
 			&& client.gameMode != null
 			&& client.gui.screen() != null) {
 			waitingForScreenClose = true;
-			messages.show(Component.translatable(
-				"client.message.auto_librarian.close_screen"
-			));
 			return;
 		}
 		if (!controller().start()) {
@@ -242,7 +238,7 @@ public final class AutoLibrarianModule extends Module {
 	protected void onDisable() {
 		waitingForScreenClose = false;
 		if (controller != null && controller.isActive()) {
-			controller.stop("client.message.auto_librarian.stopped_manual");
+			controller.stopSilently();
 		}
 	}
 

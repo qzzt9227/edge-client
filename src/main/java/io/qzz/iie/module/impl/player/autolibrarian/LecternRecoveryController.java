@@ -10,6 +10,8 @@ import net.minecraft.world.phys.Vec3;
  */
 final class LecternRecoveryController {
 	private static final int MAX_STALLED_TICKS = 30;
+	private static final int MIN_PICKUP_TIMEOUT_TICKS = 100;
+	private static final int PICKUP_TIMEOUT_TICKS_PER_BLOCK = 30;
 
 	private final Minecraft client;
 	private final LecternDropScanner drops = new LecternDropScanner();
@@ -121,7 +123,7 @@ final class LecternRecoveryController {
 		if (next == RecoveryFlow.Phase.RETURN_TO_ORIGIN) {
 			beginReturn(settings);
 		} else if (next == RecoveryFlow.Phase.MOVE_TO_DROP) {
-			state = AutomationState.MOVING_TO_RECYCLE_DROP;
+			beginMoveToDrop(settings);
 		}
 		return Outcome.RUNNING;
 	}
@@ -160,7 +162,7 @@ final class LecternRecoveryController {
 			return Outcome.RUNNING;
 		}
 		if (next == RecoveryFlow.Phase.WAIT_DROP) {
-			resumeDropSearch();
+			resumeDropSearch(settings);
 			return Outcome.RUNNING;
 		}
 		if (RecoveryDecision.reachedPickupArea(
@@ -229,11 +231,25 @@ final class LecternRecoveryController {
 		state = AutomationState.RETURNING_FROM_RECYCLE;
 	}
 
-	private void resumeDropSearch() {
+	private void beginMoveToDrop(AutoLibrarianSettings settings) {
+		session.stalledTicks = 0;
+		session.lastPosition = client.player.position();
+		session.timer = Math.max(
+			MIN_PICKUP_TIMEOUT_TICKS,
+			Math.max(
+				settings.recycleSearchTimeoutTicks(),
+				settings.recycleRadius() * PICKUP_TIMEOUT_TICKS_PER_BLOCK
+			)
+		);
+		state = AutomationState.MOVING_TO_RECYCLE_DROP;
+	}
+
+	private void resumeDropSearch(AutoLibrarianSettings settings) {
 		movement.release();
 		session.target = null;
 		session.stalledTicks = 0;
 		session.lastPosition = client.player.position();
+		session.timer = settings.recycleSearchTimeoutTicks();
 		state = AutomationState.WAIT_RECYCLE_DROP;
 	}
 

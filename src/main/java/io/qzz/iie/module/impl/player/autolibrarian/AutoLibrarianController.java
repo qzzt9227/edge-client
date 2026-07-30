@@ -92,7 +92,6 @@ final class AutoLibrarianController {
 
 		session.begin(client.level, player);
 		state = AutomationState.WAIT_PROFESSION;
-		show("client.message.auto_librarian.started");
 		beginRound(null, module.snapshot());
 		return isActive();
 	}
@@ -139,8 +138,18 @@ final class AutoLibrarianController {
 	}
 
 	void stop(String reasonTranslationKey) {
+		if (stopInternal()) {
+			show(reasonTranslationKey);
+		}
+	}
+
+	void stopSilently() {
+		stopInternal();
+	}
+
+	private boolean stopInternal() {
 		if (!isActive()) {
-			return;
+			return false;
 		}
 		interactions.stopBreaking();
 		recovery.cancel();
@@ -150,8 +159,8 @@ final class AutoLibrarianController {
 		}
 		session.restorePlayer(client.player);
 		state = AutomationState.IDLE;
-		show(reasonTranslationKey);
 		clearRuntimeState();
+		return true;
 	}
 
 	private boolean validateTarget(
