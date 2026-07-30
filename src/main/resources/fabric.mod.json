@@ -5,9 +5,9 @@
 	"name": "Edge Client",
 	"description": "An extensible, settings-driven client mod with a reusable Click GUI API.",
 	"authors": [
-		"qzz"
+		"ie155"
 	],
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/client/icon.png",
 	"environment": "client",
 	"entrypoints": {
