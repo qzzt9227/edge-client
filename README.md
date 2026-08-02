@@ -5,6 +5,7 @@
 ![Java](https://img.shields.io/badge/Java-25-E76F00?style=flat-square&logo=openjdk&logoColor=white)
 ![Environment](https://img.shields.io/badge/Environment-Client--only-5B8DEF?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square)
+![Version](https://img.shields.io/badge/Version-1.1.1-8A2BE2?style=flat-square)
 
 Edge Client 是面向 Minecraft 26.2 的纯客户端 Fabric 模组基础，专注于模块化功能、声明式设置与可复用的 Click GUI API。
 
