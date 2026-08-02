@@ -14,6 +14,9 @@ import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarHudRenderer;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarModule;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianModule;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianTradeReporter;
+import io.qzz.iie.module.impl.player.invertmouse.InvertMouseModule;
+import io.qzz.iie.module.impl.player.invertmouse.InvertMousePitchModule;
+import io.qzz.iie.module.impl.player.invertmouse.InvertMouseHooks;
 import io.qzz.iie.setting.KeybindActionDispatcher;
 import io.qzz.iie.ui.screen.ClickGuiScreenFactory;
 import io.qzz.iie.ui.message.MessageBoxAppearance;
@@ -52,6 +55,10 @@ public final class ClientRuntime {
 		ClickGuiModule clickGui = registerBuiltInModules(messages);
 		BetterHealthBarModule betterHealthBar = betterHealthBarModule();
 		AutoLibrarianModule autoLibrarian = autoLibrarianModule();
+		InvertMouseModule invertMouse = invertMouseModule();
+		InvertMousePitchModule invertMousePitch = invertMousePitchModule();
+		InvertMouseHooks.install(invertMouse);
+		InvertMouseHooks.installPitch(invertMousePitch);
 		hudPositions.installVanillaVisibility();
 		loadExtensions(messages, hudPositions, settingEditors);
 		JsonConfigService config = JsonConfigService.atDefaultPath(moduleManager);
@@ -110,6 +117,22 @@ public final class ClientRuntime {
 		return moduleManager.modules().stream()
 			.filter(AutoLibrarianModule.class::isInstance)
 			.map(AutoLibrarianModule.class::cast)
+			.findFirst()
+			.orElseThrow();
+	}
+
+	private InvertMouseModule invertMouseModule() {
+		return moduleManager.modules().stream()
+			.filter(InvertMouseModule.class::isInstance)
+			.map(InvertMouseModule.class::cast)
+			.findFirst()
+			.orElseThrow();
+	}
+
+	private InvertMousePitchModule invertMousePitchModule() {
+		return moduleManager.modules().stream()
+			.filter(InvertMousePitchModule.class::isInstance)
+			.map(InvertMousePitchModule.class::cast)
 			.findFirst()
 			.orElseThrow();
 	}

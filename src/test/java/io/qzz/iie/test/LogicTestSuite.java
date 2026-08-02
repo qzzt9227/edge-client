@@ -23,6 +23,9 @@ import io.qzz.iie.module.impl.player.autolibrarian.EnchantmentTarget;
 import io.qzz.iie.module.impl.player.autolibrarian.EnchantmentTargetsSetting;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianLogicContract;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianModule;
+import io.qzz.iie.module.impl.player.invertmouse.InvertMouseHooks;
+import io.qzz.iie.module.impl.player.invertmouse.InvertMouseModule;
+import io.qzz.iie.module.impl.player.invertmouse.InvertMousePitchModule;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarModule;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarPolicy;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarHooks;
@@ -99,6 +102,7 @@ public final class LogicTestSuite {
 		moduleRegistrationRejectsDuplicateIds();
 		moduleLifecycleIsIdempotentAndRollsBackFailures();
 		builtInModulesRegisterFullbrightAndAutoWeb();
+		invertMouseDeclaresDefaultsAndHooksFollowLifecycle();
 		betterHealthBarDeclaresDefaultsAndCapsExtraRows();
 		clickGuiAppearanceModuleDeclaresCustomizableDefaults();
 		messageBoxAppearancePreservesAspectRatio();
@@ -565,7 +569,7 @@ public final class LogicTestSuite {
 
 		BuiltInModules.register(manager);
 
-		check(manager.modules().size() == 5, "only production built-ins must be registered in the GUI");
+		check(manager.modules().size() == 7, "only production built-ins must be registered in the GUI");
 		Module fullbright = manager.find(ModuleId.of("client", "fullbright")).orElseThrow();
 		check(
 			fullbright.metadata().category().equals(ModuleCategories.RENDER),
@@ -587,6 +591,98 @@ public final class LogicTestSuite {
 		check(
 			manager.find(ModuleId.of("client", "auto_librarian")).isPresent(),
 			"auto librarian must be registered in the GUI"
+		);
+		check(
+			manager.find(ModuleId.of("client", "invert_mouse")).isPresent(),
+			"invert mouse must be registered in the GUI"
+		);
+		check(
+			manager.find(ModuleId.of("client", "invert_mouse_pitch")).isPresent(),
+			"invert mouse pitch must be registered in the GUI"
+		);
+	}
+
+	private static void invertMouseDeclaresDefaultsAndHooksFollowLifecycle() {
+		InvertMouseModule horizontal = new InvertMouseModule();
+		check(
+			horizontal.metadata().category().equals(ModuleCategories.PLAYER),
+			"invert mouse must be a player module"
+		);
+		check(horizontal.metadata().toggleable(), "invert mouse must expose a real toggle");
+		check(horizontal.settings().size() == 1, "invert mouse must declare only its shortcut");
+		check(
+			!horizontal.keybind().orElseThrow().value().isBound(),
+			"invert mouse shortcut must default unbound"
+		);
+
+		InvertMousePitchModule vertical = new InvertMousePitchModule();
+		check(
+			vertical.metadata().category().equals(ModuleCategories.PLAYER),
+			"invert mouse pitch must be a player module"
+		);
+		check(
+			vertical.metadata().toggleable(),
+			"invert mouse pitch must expose a real toggle"
+		);
+		check(
+			vertical.settings().size() == 1,
+			"invert mouse pitch must declare only its shortcut"
+		);
+		check(
+			!vertical.keybind().orElseThrow().value().isBound(),
+			"invert mouse pitch shortcut must default unbound"
+		);
+
+		check(
+			!InvertMouseHooks.shouldInvertHorizontal(),
+			"uninstalled horizontal hooks must stay inert"
+		);
+		check(
+			!InvertMouseHooks.shouldInvertVertical(),
+			"uninstalled vertical hooks must stay inert"
+		);
+		InvertMouseHooks.install(horizontal);
+		InvertMouseHooks.installPitch(vertical);
+		check(
+			!InvertMouseHooks.shouldInvertHorizontal(),
+			"a disabled module must not invert horizontal mouse look"
+		);
+		check(
+			!InvertMouseHooks.shouldInvertVertical(),
+			"a disabled module must not invert vertical mouse look"
+		);
+
+		ModuleManager manager = new ModuleManager();
+		manager.register(horizontal);
+		manager.register(vertical);
+		manager.setEnabled(horizontal.id(), true);
+		check(
+			InvertMouseHooks.shouldInvertHorizontal(),
+			"enabling the module must invert horizontal mouse look"
+		);
+		check(
+			!InvertMouseHooks.shouldInvertVertical(),
+			"horizontal enablement must not invert vertical mouse look"
+		);
+		manager.setEnabled(horizontal.id(), false);
+		check(
+			!InvertMouseHooks.shouldInvertHorizontal(),
+			"disabling the module must stop inverting horizontal mouse look"
+		);
+
+		manager.setEnabled(vertical.id(), true);
+		check(
+			InvertMouseHooks.shouldInvertVertical(),
+			"enabling the pitch module must invert vertical mouse look"
+		);
+		check(
+			!InvertMouseHooks.shouldInvertHorizontal(),
+			"vertical enablement must not invert horizontal mouse look"
+		);
+		manager.setEnabled(vertical.id(), false);
+		check(
+			!InvertMouseHooks.shouldInvertVertical(),
+			"disabling the pitch module must stop inverting vertical mouse look"
 		);
 	}
 
