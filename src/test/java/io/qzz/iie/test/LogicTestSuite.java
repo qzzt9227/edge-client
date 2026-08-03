@@ -10,8 +10,6 @@ import io.qzz.iie.api.hud.HudPositionSetting;
 import io.qzz.iie.bootstrap.BuiltInModules;
 import io.qzz.iie.config.JsonConfigService;
 import io.qzz.iie.module.Module;
-import io.qzz.iie.module.ModuleCategories;
-import io.qzz.iie.module.ModuleCategory;
 import io.qzz.iie.module.ModuleChangeResult;
 import io.qzz.iie.module.ModuleId;
 import io.qzz.iie.module.ModuleManager;
@@ -23,12 +21,18 @@ import io.qzz.iie.module.impl.player.autolibrarian.EnchantmentTarget;
 import io.qzz.iie.module.impl.player.autolibrarian.EnchantmentTargetsSetting;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianLogicContract;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianModule;
-import io.qzz.iie.module.impl.player.invertmouse.InvertMouseHooks;
-import io.qzz.iie.module.impl.player.invertmouse.InvertMouseModule;
-import io.qzz.iie.module.impl.player.invertmouse.InvertMousePitchModule;
+import io.qzz.iie.module.impl.input.invertmouse.InvertMouseHooks;
+import io.qzz.iie.module.impl.input.invertmouse.InvertMouseModule;
+import io.qzz.iie.module.impl.input.invertmouse.InvertMousePitchModule;
+import io.qzz.iie.module.impl.input.specialflip.SpecialFlipHooks;
+import io.qzz.iie.module.impl.input.specialflip.SpecialFlipModule;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarModule;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarPolicy;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarHooks;
+import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderMode;
+import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeHooks;
+import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeModule;
+import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeRenderState;
 import io.qzz.iie.module.impl.combat.autoweb.AutoWebPlanner;
 import io.qzz.iie.module.impl.combat.autoweb.AutoWebRotation;
 import io.qzz.iie.module.impl.combat.autoweb.AutoWebTypes.BlockCell;
@@ -81,6 +85,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.time.Duration;
 import java.io.IOException;
@@ -88,12 +93,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class LogicTestSuite {
-	private static final ModuleCategory COMBAT = new ModuleCategory(
-		"combat",
-		"client.category.combat",
-		100
-	);
-
 	private LogicTestSuite() {
 	}
 
@@ -103,7 +102,9 @@ public final class LogicTestSuite {
 		moduleLifecycleIsIdempotentAndRollsBackFailures();
 		builtInModulesRegisterFullbrightAndAutoWeb();
 		invertMouseDeclaresDefaultsAndHooksFollowLifecycle();
+		specialFlipDeclaresDefaultsAndHooksFollowLifecycle();
 		betterHealthBarDeclaresDefaultsAndCapsExtraRows();
+		itemRenderModeDeclaresDefaultsAndHooksFollowLifecycle();
 		clickGuiAppearanceModuleDeclaresCustomizableDefaults();
 		messageBoxAppearancePreservesAspectRatio();
 		messageBoxApiQueuesAndExpiresMessages();
@@ -365,8 +366,8 @@ public final class LogicTestSuite {
 		ClickGuiModule module = new ClickGuiModule();
 
 		check(
-			module.metadata().category().equals(ModuleCategories.GUI),
-			"ClickGUI appearance belongs in the GUI category"
+			module.category().id().equals("gui"),
+			"ClickGUI appearance derives from its gui package"
 		);
 		check(!module.metadata().toggleable(), "appearance-only module must not expose a fake toggle");
 		check(module.settings().size() == 9, "all requested Click GUI values must be GUI settings");
@@ -569,16 +570,16 @@ public final class LogicTestSuite {
 
 		BuiltInModules.register(manager);
 
-		check(manager.modules().size() == 7, "only production built-ins must be registered in the GUI");
+		check(manager.modules().size() == 9, "only production built-ins must be registered in the GUI");
 		Module fullbright = manager.find(ModuleId.of("client", "fullbright")).orElseThrow();
 		check(
-			fullbright.metadata().category().equals(ModuleCategories.RENDER),
-			"fullbright must be in the render category"
+			fullbright.category().id().equals("render"),
+			"fullbright derives from its render package"
 		);
 		Module autoWeb = manager.find(ModuleId.of("client", "auto_web")).orElseThrow();
 		check(
-			autoWeb.metadata().category().equals(ModuleCategories.COMBAT),
-			"auto web must be in the combat category"
+			autoWeb.category().id().equals("combat"),
+			"auto web derives from its combat package"
 		);
 		check(
 			manager.find(ModuleId.of("client", "click_gui")).isPresent(),
@@ -600,13 +601,21 @@ public final class LogicTestSuite {
 			manager.find(ModuleId.of("client", "invert_mouse_pitch")).isPresent(),
 			"invert mouse pitch must be registered in the GUI"
 		);
+		check(
+			manager.find(ModuleId.of("client", "special_flip")).isPresent(),
+			"special flip must be registered in the GUI"
+		);
+		check(
+			manager.find(ModuleId.of("client", "item_render_mode")).isPresent(),
+			"item render mode must be registered in the GUI"
+		);
 	}
 
 	private static void invertMouseDeclaresDefaultsAndHooksFollowLifecycle() {
 		InvertMouseModule horizontal = new InvertMouseModule();
 		check(
-			horizontal.metadata().category().equals(ModuleCategories.PLAYER),
-			"invert mouse must be a player module"
+			horizontal.category().id().equals("input"),
+			"invert mouse derives from its input package"
 		);
 		check(horizontal.metadata().toggleable(), "invert mouse must expose a real toggle");
 		check(horizontal.settings().size() == 1, "invert mouse must declare only its shortcut");
@@ -617,8 +626,8 @@ public final class LogicTestSuite {
 
 		InvertMousePitchModule vertical = new InvertMousePitchModule();
 		check(
-			vertical.metadata().category().equals(ModuleCategories.PLAYER),
-			"invert mouse pitch must be a player module"
+			vertical.category().id().equals("input"),
+			"invert mouse pitch derives from its input package"
 		);
 		check(
 			vertical.metadata().toggleable(),
@@ -686,12 +695,55 @@ public final class LogicTestSuite {
 		);
 	}
 
+	private static void specialFlipDeclaresDefaultsAndHooksFollowLifecycle() {
+		SpecialFlipModule module = new SpecialFlipModule();
+		check(
+			module.category().id().equals("input"),
+			"special flip derives from its input package"
+		);
+		check(
+			module.metadata().toggleable(),
+			"special flip must expose a real toggle"
+		);
+		check(
+			module.settings().size() == 1,
+			"special flip must declare only its shortcut"
+		);
+		check(
+			!module.keybind().orElseThrow().value().isBound(),
+			"special flip shortcut must default unbound"
+		);
+
+		check(
+			!SpecialFlipHooks.shouldApply(),
+			"uninstalled special flip hooks must stay inert"
+		);
+		SpecialFlipHooks.install(module);
+		check(
+			!SpecialFlipHooks.shouldApply(),
+			"a disabled special flip module must not apply"
+		);
+
+		ModuleManager manager = new ModuleManager();
+		manager.register(module);
+		manager.setEnabled(module.id(), true);
+		check(
+			SpecialFlipHooks.shouldApply(),
+			"enabling special flip must apply the rotated mapping"
+		);
+		manager.setEnabled(module.id(), false);
+		check(
+			!SpecialFlipHooks.shouldApply(),
+			"disabling special flip must stop applying the rotated mapping"
+		);
+	}
+
 	private static void autoLibrarianDeclaresOriginalSettingsAndDefaults() {
 		AutoLibrarianModule module = new AutoLibrarianModule(MessageBoxApi.noop());
 
 		check(
-			module.metadata().category().equals(ModuleCategories.PLAYER),
-			"auto librarian must be a player module"
+			module.category().id().equals("player"),
+			"auto librarian derives from its player package"
 		);
 		check(module.targets().value().size() == 1, "one historical target must be declared");
 		check(
@@ -713,8 +765,8 @@ public final class LogicTestSuite {
 		BetterHealthBarModule module = new BetterHealthBarModule();
 
 		check(
-			module.metadata().category().equals(ModuleCategories.RENDER),
-			"better health bar must be a render module"
+			module.category().id().equals("render"),
+			"better health bar derives from its render package"
 		);
 		check(module.thresholdRows().value() == 2, "health threshold must default to two rows");
 		check(module.numberScale().value() == 1.0, "health number size must default to 100%");
@@ -757,6 +809,94 @@ public final class LogicTestSuite {
 		check(
 			closeTo(BetterHealthBarHooks.clampMaximumHealth(60.0F), 40.0),
 			"enabled module hook must apply the configured row cap"
+		);
+	}
+
+	private static void itemRenderModeDeclaresDefaultsAndHooksFollowLifecycle() {
+		ItemRenderModeModule module = new ItemRenderModeModule();
+
+		check(
+			module.category().id().equals("render"),
+			"item render mode derives from its render package"
+		);
+		check(module.metadata().toggleable(), "item render mode must expose a real toggle");
+		check(
+			module.renderModeSetting().value() == ItemRenderMode.BILLBOARD,
+			"2D billboard must be the default mode"
+		);
+		check(module.settings().size() == 2, "module must declare mode and shortcut");
+		check(
+			!module.keybind().orElseThrow().value().isBound(),
+			"item render mode shortcut must default unbound"
+		);
+
+		check(
+			ItemRenderModeHooks.renderMode() == ItemRenderMode.VANILLA,
+			"uninstalled hooks must stay inert"
+		);
+		ItemRenderModeHooks.install(module);
+		check(
+			ItemRenderModeHooks.renderMode() == ItemRenderMode.VANILLA,
+			"a disabled module must not modify item rendering"
+		);
+
+		ModuleManager manager = new ModuleManager();
+		manager.register(module);
+		manager.setEnabled(module.id(), true);
+		check(
+			ItemRenderModeHooks.renderMode() == ItemRenderMode.BILLBOARD,
+			"enabling must apply the 2D billboard mode"
+		);
+
+		module.renderModeSetting().set(ItemRenderMode.FREEZE_ROTATION);
+		check(
+			ItemRenderModeHooks.renderMode() == ItemRenderMode.FREEZE_ROTATION,
+			"switching the mode must apply freeze rotation"
+		);
+
+		UUID kept = UUID.randomUUID();
+		UUID dropped = UUID.randomUUID();
+		ItemRenderModeRenderState first = new ItemRenderModeRenderState();
+		ItemRenderModeHooks.applyFrozenSpin(kept, 2.5F, first);
+		check(
+			first.frozenSpin != null && closeTo(first.frozenSpin, 2.5),
+			"first sight must freeze the current angle"
+		);
+		ItemRenderModeRenderState second = new ItemRenderModeRenderState();
+		ItemRenderModeHooks.applyFrozenSpin(kept, 9.0F, second);
+		check(
+			closeTo(second.frozenSpin, 2.5),
+			"later frames must reuse the first frozen angle"
+		);
+
+		ItemRenderModeRenderState stale = new ItemRenderModeRenderState();
+		ItemRenderModeHooks.applyFrozenSpin(dropped, 4.0F, stale);
+		ItemRenderModeHooks.pruneFrozenAngles(List.of(kept));
+		ItemRenderModeRenderState surviving = new ItemRenderModeRenderState();
+		ItemRenderModeHooks.applyFrozenSpin(kept, 7.0F, surviving);
+		check(
+			closeTo(surviving.frozenSpin, 2.5),
+			"a live entity must keep its frozen angle after pruning"
+		);
+		ItemRenderModeRenderState recaptured = new ItemRenderModeRenderState();
+		ItemRenderModeHooks.applyFrozenSpin(dropped, 3.0F, recaptured);
+		check(
+			closeTo(recaptured.frozenSpin, 3.0),
+			"a pruned entity must re-freeze at its current angle"
+		);
+
+		module.renderModeSetting().set(ItemRenderMode.BILLBOARD);
+		ItemRenderModeRenderState nonFrozen = new ItemRenderModeRenderState();
+		ItemRenderModeHooks.applyFrozenSpin(UUID.randomUUID(), 5.0F, nonFrozen);
+		check(
+			nonFrozen.frozenSpin == null,
+			"non-freeze modes must not carry frozen angles into rendering"
+		);
+
+		manager.setEnabled(module.id(), false);
+		check(
+			ItemRenderModeHooks.renderMode() == ItemRenderMode.VANILLA,
+			"disabling must restore vanilla item rendering"
 		);
 	}
 
@@ -1438,7 +1578,6 @@ public final class LogicTestSuite {
 				ModuleId.of("test", path),
 				"client.module.test.name",
 				"client.module.test.description",
-				COMBAT,
 				100
 			));
 		}
@@ -1502,7 +1641,6 @@ public final class LogicTestSuite {
 				ModuleId.of("test", path),
 				"client.module.test.name",
 				"client.module.test.description",
-				COMBAT,
 				100
 			));
 			keybind(new KeybindSetting(
@@ -1521,7 +1659,6 @@ public final class LogicTestSuite {
 				ModuleId.of("test", path),
 				"client.module.test.name",
 				"client.module.test.description",
-				COMBAT,
 				100
 			));
 		}

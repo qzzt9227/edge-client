@@ -1,7 +1,6 @@
-package io.qzz.iie.module.impl.player.invertmouse;
+package io.qzz.iie.module.impl.input.invertmouse;
 
 import io.qzz.iie.module.Module;
-import io.qzz.iie.module.ModuleCategories;
 import io.qzz.iie.module.ModuleId;
 import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.setting.KeybindSetting;
@@ -22,7 +21,6 @@ public final class InvertMouseModule extends Module {
 			ModuleId.of("client", "invert_mouse"),
 			"client.module.invert_mouse.name",
 			"client.module.invert_mouse.description",
-			ModuleCategories.PLAYER,
 			100
 		));
 	}

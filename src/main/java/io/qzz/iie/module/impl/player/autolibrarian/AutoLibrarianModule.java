@@ -2,7 +2,6 @@ package io.qzz.iie.module.impl.player.autolibrarian;
 
 import io.qzz.iie.api.message.MessageBoxApi;
 import io.qzz.iie.module.Module;
-import io.qzz.iie.module.ModuleCategories;
 import io.qzz.iie.module.ModuleId;
 import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.setting.BooleanSetting;
@@ -108,7 +107,6 @@ public final class AutoLibrarianModule extends Module {
 			ModuleId.of("client", "auto_librarian"),
 			"client.module.auto_librarian.name",
 			"client.module.auto_librarian.description",
-			ModuleCategories.PLAYER,
 			100
 		));
 		this.messages = Objects.requireNonNull(messages, "messages");

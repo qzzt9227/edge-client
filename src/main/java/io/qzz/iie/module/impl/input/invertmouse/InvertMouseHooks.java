@@ -1,4 +1,4 @@
-package io.qzz.iie.module.impl.player.invertmouse;
+package io.qzz.iie.module.impl.input.invertmouse;
 
 import net.minecraft.client.player.LocalPlayer;
 

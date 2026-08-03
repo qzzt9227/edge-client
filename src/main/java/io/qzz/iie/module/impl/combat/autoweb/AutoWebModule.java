@@ -1,7 +1,6 @@
 package io.qzz.iie.module.impl.combat.autoweb;
 
 import io.qzz.iie.module.Module;
-import io.qzz.iie.module.ModuleCategories;
 import io.qzz.iie.module.ModuleId;
 import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.module.impl.combat.autoweb.AutoWebTypes.HotbarMode;
@@ -121,7 +120,6 @@ public final class AutoWebModule extends Module {
 			ModuleId.of("client", "auto_web"),
 			"client.module.auto_web.name",
 			"client.module.auto_web.description",
-			ModuleCategories.COMBAT,
 			100
 		));
 	}

@@ -3,7 +3,6 @@ package io.qzz.iie.ui.screen;
 import io.qzz.iie.api.hud.HudPositionEditorApi;
 import io.qzz.iie.api.setting.SettingEditorApi;
 import io.qzz.iie.module.Module;
-import io.qzz.iie.module.ModuleCategories;
 import io.qzz.iie.module.ModuleCategory;
 import io.qzz.iie.module.ModuleManager;
 import io.qzz.iie.setting.BooleanSetting;
@@ -69,7 +68,7 @@ public final class ClickGuiScreen extends Screen {
 	private final List<SettingRowView> settingRows = new ArrayList<>();
 
 	private ModuleEnabledRowView moduleEnabledRow;
-	private ModuleCategory selectedCategory = ModuleCategories.COMBAT;
+	private ModuleCategory selectedCategory;
 	private Module settingsModule;
 	private BuiltInPage builtInPage;
 	private String searchQuery = "";
@@ -331,10 +330,10 @@ public final class ClickGuiScreen extends Screen {
 	}
 
 	private void ensureSelectedCategory() {
-		if (categories().contains(selectedCategory)) {
+		if (selectedCategory != null && categories().contains(selectedCategory)) {
 			return;
 		}
-		selectedCategory = categories().stream().findFirst().orElse(ModuleCategories.COMBAT);
+		selectedCategory = categories().stream().findFirst().orElse(null);
 	}
 
 	private void ensureSearchField() {
@@ -415,10 +414,6 @@ public final class ClickGuiScreen extends Screen {
 		addFooterControl(
 			layout.configButton(),
 			BuiltInPage.CONFIG_MANAGER
-		);
-		addFooterControl(
-			layout.settingsButton(),
-			BuiltInPage.SETTINGS
 		);
 	}
 
@@ -660,7 +655,7 @@ public final class ClickGuiScreen extends Screen {
 	private List<Module> visibleModules() {
 		String query = searchQuery.strip().toLowerCase(Locale.ROOT);
 		return moduleManager.modules().stream()
-			.filter(module -> module.metadata().category().equals(selectedCategory))
+			.filter(module -> module.category().equals(selectedCategory))
 			.filter(module -> query.isEmpty() || matches(module, query))
 			.sorted(
 				Comparator.comparingInt((Module module) -> module.metadata().order())
@@ -739,14 +734,7 @@ public final class ClickGuiScreen extends Screen {
 			}
 
 			String name = translated(category.translationKey());
-			painter.roundedRect(bounds.left() + 10, bounds.top() + 10, 18, 18, 5, ClickGuiTheme.OUTLINE);
-			painter.text(
-				name.isEmpty() ? "?" : name.substring(0, 1),
-				bounds.left() + 16,
-				bounds.top() + 15,
-				category.equals(selectedCategory) ? ClickGuiTheme.CONTROL_DARK : ClickGuiTheme.TEXT_PRIMARY
-			);
-			painter.text(name, bounds.left() + 38, bounds.top() + 15, ClickGuiTheme.TEXT_PRIMARY);
+			painter.text(name, bounds.left() + 12, bounds.top() + 15, ClickGuiTheme.TEXT_PRIMARY);
 			String count = Integer.toString(moduleCount(category));
 			painter.text(
 				count,
@@ -765,14 +753,6 @@ public final class ClickGuiScreen extends Screen {
 			mouseX,
 			mouseY
 		);
-		renderFooterButton(
-			painter,
-			layout.settingsButton(),
-			translated("client.gui.settings"),
-			builtInPage == BuiltInPage.SETTINGS,
-			mouseX,
-			mouseY
-		);
 	}
 
 	private void renderSidebarSelection(
@@ -783,8 +763,7 @@ public final class ClickGuiScreen extends Screen {
 			layout,
 			categories,
 			selectedCategory,
-			builtInPage == BuiltInPage.CONFIG_MANAGER,
-			builtInPage == BuiltInPage.SETTINGS
+			builtInPage == BuiltInPage.CONFIG_MANAGER
 		);
 		painter.roundedRect(
 			current.left(),
@@ -1161,15 +1140,12 @@ public final class ClickGuiScreen extends Screen {
 		if (builtInPage == BuiltInPage.CONFIG_MANAGER) {
 			return translated("client.gui.config_manager");
 		}
-		if (builtInPage == BuiltInPage.SETTINGS) {
-			return translated("client.gui.settings");
-		}
 		return translated(selectedCategory.translationKey());
 	}
 
 	private int moduleCount(ModuleCategory category) {
 		return (int) moduleManager.modules().stream()
-			.filter(module -> module.metadata().category().equals(category))
+			.filter(module -> module.category().equals(category))
 			.count();
 	}
 
@@ -1209,8 +1185,7 @@ public final class ClickGuiScreen extends Screen {
 	}
 
 	private enum BuiltInPage {
-		CONFIG_MANAGER,
-		SETTINGS
+		CONFIG_MANAGER
 	}
 
 	private record ModuleRowView(

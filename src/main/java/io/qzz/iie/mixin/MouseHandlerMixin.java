@@ -1,6 +1,7 @@
 package io.qzz.iie.mixin;
 
-import io.qzz.iie.module.impl.player.invertmouse.InvertMouseHooks;
+import io.qzz.iie.module.impl.input.invertmouse.InvertMouseHooks;
+import io.qzz.iie.module.impl.input.specialflip.SpecialFlipHooks;
 
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.player.LocalPlayer;
@@ -31,6 +32,10 @@ abstract class MouseHandlerMixin {
 		double yRot,
 		double xRot
 	) {
+		if (SpecialFlipHooks.shouldApply()) {
+			SpecialFlipHooks.turn(player, yRot, xRot);
+			return;
+		}
 		InvertMouseHooks.turn(player, yRot, xRot);
 	}
 }

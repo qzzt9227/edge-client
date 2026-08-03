@@ -136,7 +136,12 @@ src/main/java/io/qzz/iie/
 
 ## 模块 API
 
-每个模块需要稳定 ID、翻译键、分类、启用状态和设置集合。显示名称不是持久化 ID。
+每个模块需要稳定 ID、翻译键、启用状态和设置集合。显示名称不是持久化 ID。
+
+分类不在模块中显式声明：`Module` 基类从模块类包路径
+`module.impl.<category>.<...>` 自动派生分类 id（`module.impl` 之后的第一段），
+翻译键约定为 `client.category.<id>`，侧栏按分类 id 字母序排序。模块必须放在
+某个分类子包下，不能直接位于 `module.impl`。
 
 当前生命周期由 `ModuleManager` 统一驱动：
 

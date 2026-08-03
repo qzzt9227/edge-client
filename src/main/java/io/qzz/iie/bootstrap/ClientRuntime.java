@@ -12,11 +12,15 @@ import io.qzz.iie.module.impl.gui.clickgui.ClickGuiModule;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarHooks;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarHudRenderer;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarModule;
+import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeHooks;
+import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeModule;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianModule;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianTradeReporter;
-import io.qzz.iie.module.impl.player.invertmouse.InvertMouseModule;
-import io.qzz.iie.module.impl.player.invertmouse.InvertMousePitchModule;
-import io.qzz.iie.module.impl.player.invertmouse.InvertMouseHooks;
+import io.qzz.iie.module.impl.input.invertmouse.InvertMouseModule;
+import io.qzz.iie.module.impl.input.invertmouse.InvertMousePitchModule;
+import io.qzz.iie.module.impl.input.invertmouse.InvertMouseHooks;
+import io.qzz.iie.module.impl.input.specialflip.SpecialFlipModule;
+import io.qzz.iie.module.impl.input.specialflip.SpecialFlipHooks;
 import io.qzz.iie.setting.KeybindActionDispatcher;
 import io.qzz.iie.ui.screen.ClickGuiScreenFactory;
 import io.qzz.iie.ui.message.MessageBoxAppearance;
@@ -57,8 +61,12 @@ public final class ClientRuntime {
 		AutoLibrarianModule autoLibrarian = autoLibrarianModule();
 		InvertMouseModule invertMouse = invertMouseModule();
 		InvertMousePitchModule invertMousePitch = invertMousePitchModule();
+		SpecialFlipModule specialFlip = specialFlipModule();
 		InvertMouseHooks.install(invertMouse);
 		InvertMouseHooks.installPitch(invertMousePitch);
+		SpecialFlipHooks.install(specialFlip);
+		ItemRenderModeModule itemRenderMode = itemRenderModeModule();
+		ItemRenderModeHooks.install(itemRenderMode);
 		hudPositions.installVanillaVisibility();
 		loadExtensions(messages, hudPositions, settingEditors);
 		JsonConfigService config = JsonConfigService.atDefaultPath(moduleManager);
@@ -133,6 +141,22 @@ public final class ClientRuntime {
 		return moduleManager.modules().stream()
 			.filter(InvertMousePitchModule.class::isInstance)
 			.map(InvertMousePitchModule.class::cast)
+			.findFirst()
+			.orElseThrow();
+	}
+
+	private SpecialFlipModule specialFlipModule() {
+		return moduleManager.modules().stream()
+			.filter(SpecialFlipModule.class::isInstance)
+			.map(SpecialFlipModule.class::cast)
+			.findFirst()
+			.orElseThrow();
+	}
+
+	private ItemRenderModeModule itemRenderModeModule() {
+		return moduleManager.modules().stream()
+			.filter(ItemRenderModeModule.class::isInstance)
+			.map(ItemRenderModeModule.class::cast)
 			.findFirst()
 			.orElseThrow();
 	}

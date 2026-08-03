@@ -62,6 +62,8 @@ record ClickGuiLayout(
 			- border * 2
 			- sidebarWidth
 			- (sidebarCollapsed ? 0 : gap);
+		int radius = Math.max(10, (int) Math.round(26 * scale));
+		int innerRadius = Math.max(7, radius - border);
 
 		return new ClickGuiLayout(
 			windowX,
@@ -78,8 +80,8 @@ record ClickGuiLayout(
 			windowHeight - border * 2,
 			padding,
 			smallGap,
-			Math.max(10, (int) Math.round(24 * scale)),
-			Math.max(8, (int) Math.round(18 * scale)),
+			radius,
+			innerRadius,
 			headerHeight,
 			navigationRowHeight,
 			moduleRowHeight,
@@ -115,15 +117,6 @@ record ClickGuiLayout(
 		);
 	}
 
-	Rect settingsButton() {
-		return new Rect(
-			sidebarX + padding,
-			sidebarY + sidebarHeight - navigationRowHeight - padding,
-			sidebarWidth - padding * 2,
-			navigationRowHeight
-		);
-	}
-
 	Rect searchField() {
 		int width = Math.clamp(contentWidth / 4, 105, 180);
 		return new Rect(
@@ -135,7 +128,10 @@ record ClickGuiLayout(
 	}
 
 	Rect backButton() {
-		return new Rect(contentX + padding, contentY + 15, 16, 18);
+		int x = sidebarWidth > 0
+			? contentX + padding
+			: contentX + 16 + 24 + smallGap;
+		return new Rect(x, contentY + 15, 16, 18);
 	}
 
 	Rect listArea() {

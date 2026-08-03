@@ -1,7 +1,6 @@
 package io.qzz.iie.module.impl.gui.clickgui;
 
 import io.qzz.iie.module.Module;
-import io.qzz.iie.module.ModuleCategories;
 import io.qzz.iie.module.ModuleId;
 import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.setting.ChoiceOption;
@@ -89,7 +88,6 @@ public final class ClickGuiModule extends Module {
 			ModuleId.of("client", "click_gui"),
 			"client.module.click_gui.name",
 			"client.module.click_gui.description",
-			ModuleCategories.GUI,
 			100,
 			false
 		));

@@ -1,7 +1,6 @@
-package io.qzz.iie.module.impl;
+package io.qzz.iie.module.impl.combat.example;
 
 import io.qzz.iie.module.Module;
-import io.qzz.iie.module.ModuleCategories;
 import io.qzz.iie.module.ModuleId;
 import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.setting.BooleanSetting;
@@ -34,7 +33,6 @@ public final class ExampleModule extends Module {
 			ModuleId.of("client", "example"),
 			"client.module.example.name",
 			"client.module.example.description",
-			ModuleCategories.COMBAT,
 			100
 		));
 	}

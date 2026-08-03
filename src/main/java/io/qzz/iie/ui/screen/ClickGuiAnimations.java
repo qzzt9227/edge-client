@@ -52,14 +52,11 @@ final class ClickGuiAnimations {
 		ClickGuiLayout layout,
 		List<ModuleCategory> categories,
 		ModuleCategory selectedCategory,
-		boolean configSelected,
-		boolean settingsSelected
+		boolean configSelected
 	) {
 		Rect target;
 		if (configSelected) {
 			target = layout.configButton();
-		} else if (settingsSelected) {
-			target = layout.settingsButton();
 		} else {
 			int categoryIndex = Math.max(0, categories.indexOf(selectedCategory));
 			target = layout.categoryButton(categoryIndex);

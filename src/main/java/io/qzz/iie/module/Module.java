@@ -23,6 +23,26 @@ public abstract class Module {
 		return metadata;
 	}
 
+	/**
+	 * 从模块类包路径派生分类：{@code module.impl.<category>.<...>} 中
+	 * {@code module.impl} 之后的第一段即分类 id，翻译键约定为
+	 * {@code client.category.<id>}。
+	 */
+	public final ModuleCategory category() {
+		String packageName = getClass().getPackageName();
+		String prefix = "io.qzz.iie.module.impl.";
+		if (!packageName.startsWith(prefix)) {
+			throw new IllegalStateException(
+				"Module must live under a category package " + prefix
+					+ " but found: " + getClass().getName()
+			);
+		}
+		String rest = packageName.substring(prefix.length());
+		int separator = rest.indexOf('.');
+		String categoryId = separator == -1 ? rest : rest.substring(0, separator);
+		return new ModuleCategory(categoryId, "client.category." + categoryId);
+	}
+
 	public final ModuleId id() {
 		return metadata.id();
 	}

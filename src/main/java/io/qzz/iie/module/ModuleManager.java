@@ -41,8 +41,9 @@ public final class ModuleManager {
 	public List<ModuleCategory> categories() {
 		List<ModuleCategory> categories = new ArrayList<>();
 		for (Module module : byId.values()) {
-			if (!categories.contains(module.metadata().category())) {
-				categories.add(module.metadata().category());
+			ModuleCategory category = module.category();
+			if (!categories.contains(category)) {
+				categories.add(category);
 			}
 		}
 		categories.sort(null);

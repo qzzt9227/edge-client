@@ -1,7 +1,6 @@
 package io.qzz.iie.module.impl.render.fullbright;
 
 import io.qzz.iie.module.Module;
-import io.qzz.iie.module.ModuleCategories;
 import io.qzz.iie.module.ModuleId;
 import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.setting.KeybindSetting;
@@ -26,7 +25,6 @@ public final class FullbrightModule extends Module {
 			ModuleId.of("client", "fullbright"),
 			"client.module.fullbright.name",
 			"client.module.fullbright.description",
-			ModuleCategories.RENDER,
 			100
 		));
 	}

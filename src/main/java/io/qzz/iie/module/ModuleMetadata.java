@@ -6,7 +6,6 @@ public record ModuleMetadata(
 	ModuleId id,
 	String nameTranslationKey,
 	String descriptionTranslationKey,
-	ModuleCategory category,
 	int order,
 	boolean toggleable
 ) {
@@ -14,16 +13,14 @@ public record ModuleMetadata(
 		ModuleId id,
 		String nameTranslationKey,
 		String descriptionTranslationKey,
-		ModuleCategory category,
 		int order
 	) {
-		this(id, nameTranslationKey, descriptionTranslationKey, category, order, true);
+		this(id, nameTranslationKey, descriptionTranslationKey, order, true);
 	}
 
 	public ModuleMetadata {
 		Objects.requireNonNull(id, "id");
 		Objects.requireNonNull(nameTranslationKey, "nameTranslationKey");
 		Objects.requireNonNull(descriptionTranslationKey, "descriptionTranslationKey");
-		Objects.requireNonNull(category, "category");
 	}
 }

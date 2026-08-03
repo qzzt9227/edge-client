@@ -3,7 +3,6 @@ package io.qzz.iie.module.impl.render.betterhealth;
 import io.qzz.iie.api.hud.HudPosition;
 import io.qzz.iie.api.hud.HudPositionSetting;
 import io.qzz.iie.module.Module;
-import io.qzz.iie.module.ModuleCategories;
 import io.qzz.iie.module.ModuleId;
 import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.setting.ChoiceOption;
@@ -48,7 +47,6 @@ public final class BetterHealthBarModule extends Module {
 			ModuleId.of("client", "better_health_bar"),
 			"client.module.better_health_bar.name",
 			"client.module.better_health_bar.description",
-			ModuleCategories.RENDER,
 			200
 		));
 	}
