@@ -64,7 +64,8 @@ public final class BetterHealthBarHudRenderer implements HudElementPreview {
 		UiPainter painter = new UiPainter(
 			graphics,
 			Minecraft.getInstance().font,
-			module.numberScale().value()
+			module.numberScale().value(),
+			io.qzz.iie.font.ClientFontManager.getActiveFontDescription()
 		);
 		painter.text(
 			currentText(),

@@ -2,6 +2,7 @@ package io.qzz.iie.mixin;
 
 import io.qzz.iie.module.impl.input.invertmouse.InvertMouseHooks;
 import io.qzz.iie.module.impl.input.specialflip.SpecialFlipHooks;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteVisualState;
 
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.player.LocalPlayer;
@@ -32,6 +33,9 @@ abstract class MouseHandlerMixin {
 		double yRot,
 		double xRot
 	) {
+		if (AutoIgniteVisualState.shouldSuppressMouseTurn()) {
+			return;
+		}
 		if (SpecialFlipHooks.shouldApply()) {
 			SpecialFlipHooks.turn(player, yRot, xRot);
 			return;

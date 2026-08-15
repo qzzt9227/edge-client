@@ -22,33 +22,38 @@ public final class SliderPainter {
 		Objects.requireNonNull(slider, "slider");
 		Objects.requireNonNull(displayedValue, "displayedValue");
 
-		int trackY = bounds.top() + 4;
+		int trackHeight = 6;
+		int trackY = bounds.top() + (int) (bounds.height() - trackHeight) / 2;
 		painter.roundedRect(
 			bounds.left(),
 			trackY,
 			(int) bounds.width(),
-			4,
-			2,
+			trackHeight,
+			trackHeight / 2,
 			ClickGuiTheme.CONTROL_OFF
 		);
 		int filled = (int) Math.round(bounds.width() * slider.fraction());
-		painter.roundedRect(
-			bounds.left(),
-			trackY,
-			filled,
-			4,
-			2,
-			ClickGuiTheme.ACCENT
-		);
+		if (filled > 0) {
+			painter.roundedRect(
+				bounds.left(),
+				trackY,
+				filled,
+				trackHeight,
+				trackHeight / 2,
+				ClickGuiTheme.ACCENT
+			);
+		}
+		int thumbSize = 12;
 		int thumbX = bounds.left()
-			+ Math.clamp(filled - 4, 0, Math.max(0, (int) bounds.width() - 8));
+			+ Math.clamp(filled - thumbSize / 2, 0, Math.max(0, (int) bounds.width() - thumbSize));
+		int thumbY = bounds.top() + (int) (bounds.height() - thumbSize) / 2;
 		painter.roundedRect(
 			thumbX,
-			bounds.top(),
-			8,
-			12,
-			4,
-			ClickGuiTheme.TEXT_PRIMARY
+			thumbY,
+			thumbSize,
+			thumbSize,
+			thumbSize / 2,
+			ClickGuiTheme.ACCENT
 		);
 		painter.text(
 			displayedValue,

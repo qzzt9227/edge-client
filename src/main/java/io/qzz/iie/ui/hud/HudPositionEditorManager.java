@@ -74,8 +74,20 @@ public final class HudPositionEditorManager implements HudPositionEditorApi {
 		);
 	}
 
+	public Map<HudPositionSetting, HudElementPreview> registeredPreviews() {
+		return java.util.Collections.unmodifiableMap(previews);
+	}
+
+	public void openUnifiedEditor(Screen parent) {
+		Minecraft.getInstance().setScreenAndShow(
+			new io.qzz.iie.ui.screen.HudEditorScreen(this, parent)
+		);
+	}
+
 	public boolean isEditing() {
-		return Minecraft.getInstance().gui.screen() instanceof HudPositionEditorScreen;
+		Screen current = Minecraft.getInstance().gui.screen();
+		return current instanceof HudPositionEditorScreen
+			|| current instanceof io.qzz.iie.ui.screen.HudEditorScreen;
 	}
 
 	static boolean isVanillaElementVisibleDuringEditing(Identifier id) {

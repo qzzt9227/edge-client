@@ -5,6 +5,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.FontDescription;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
@@ -67,7 +69,7 @@ public final class MessageBoxHudRenderer {
 			(int) Math.round(MessageBoxAppearance.BASE_HEIGHT * fittedScale)
 		);
 		int gap = Math.max(3, (int) Math.round(7 * fittedScale));
-		int radius = Math.max(4, (int) Math.round(10 * fittedScale));
+		int radius = Math.max(6, (int) Math.round(14 * fittedScale));
 		int y = MARGIN;
 
 		FontDescription font = fonts.computeIfAbsent(
@@ -91,11 +93,6 @@ public final class MessageBoxHudRenderer {
 				style.opacity() * snapshot.visibility()
 			);
 			int accent = withAlpha(ACCENT_RGB, snapshot.visibility());
-			int textColor = withAlpha(
-				style.textColor() & 0x00FFFFFF,
-				snapshot.visibility()
-			);
-
 			textPainter.roundedRect(x, y, boxWidth, boxHeight, radius, background);
 			textPainter.roundedRect(
 				x + Math.max(5, (int) Math.round(8 * fittedScale)),
@@ -111,12 +108,22 @@ public final class MessageBoxHudRenderer {
 				1,
 				boxWidth - (textX - x) - Math.max(8, (int) Math.round(12 * fittedScale))
 			);
+			Component message = snapshot.message();
 			String text = textPainter.trimToWidth(
-				snapshot.message().getString(),
+				message.getString(),
 				availableWidth
 			);
+			TextColor messageColor = message.getStyle().getColor();
+			int resolvedTextColor = messageColor == null
+				? style.textColor()
+				: 0xFF000000 | messageColor.getValue() & 0x00FFFFFF;
 			int textY = y + Math.max(0, (boxHeight - textPainter.lineHeight()) / 2);
-			textPainter.text(text, textX, textY, textColor);
+			textPainter.text(
+				Component.literal(text).withStyle(message.getStyle()),
+				textX,
+				textY,
+				withAlpha(resolvedTextColor & 0x00FFFFFF, snapshot.visibility())
+			);
 			y += boxHeight + gap;
 		}
 	}

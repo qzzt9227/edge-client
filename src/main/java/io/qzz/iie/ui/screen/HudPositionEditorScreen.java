@@ -34,15 +34,31 @@ public final class HudPositionEditorScreen extends Screen {
 	}
 
 	@Override
+	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+	}
+
+	@Override
+	public void extractTransparentBackground(GuiGraphicsExtractor graphics) {
+	}
+
+	@Override
+	public void extractBlurredBackground(GuiGraphicsExtractor graphics) {
+	}
+
+	@Override
 	public void extractRenderState(
 		GuiGraphicsExtractor graphics,
 		int mouseX,
 		int mouseY,
 		float delta
 	) {
-		super.extractRenderState(graphics, mouseX, mouseY, delta);
 		Rect bounds = updateLayout();
-		UiPainter painter = new UiPainter(graphics, font);
+		UiPainter painter = new UiPainter(
+			graphics,
+			font,
+			1.0,
+			io.qzz.iie.font.ClientFontManager.getActiveFontDescription()
+		);
 		painter.roundedRectWithBorder(
 			bounds.left(),
 			bounds.top(),

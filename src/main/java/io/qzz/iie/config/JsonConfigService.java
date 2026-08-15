@@ -56,6 +56,7 @@ public final class JsonConfigService {
 		this.configPath = Objects.requireNonNull(configPath, "configPath").toAbsolutePath().normalize();
 		observeRegisteredSettings();
 		moduleManager.addChangeListener(this::modelChanged);
+		io.qzz.iie.ui.panel.CategoryPositionManager.setSaveCallback(this::modelChanged);
 	}
 
 	public static JsonConfigService atDefaultPath(ModuleManager moduleManager) {
@@ -116,6 +117,34 @@ public final class JsonConfigService {
 	}
 
 	private void apply(JsonObject root) {
+		JsonElement guiLayoutElement = root.get("guiLayout");
+		if (guiLayoutElement != null && guiLayoutElement.isJsonObject()) {
+			JsonObject layoutObj = guiLayoutElement.getAsJsonObject();
+			java.util.Map<String, io.qzz.iie.ui.panel.CategoryPositionManager.PanelState> loaded = new java.util.LinkedHashMap<>();
+			for (String key : layoutObj.keySet()) {
+				JsonElement elem = layoutObj.get(key);
+				if (elem != null && elem.isJsonObject()) {
+					JsonObject p = elem.getAsJsonObject();
+					int x = p.has("x") && p.get("x").isJsonPrimitive() && p.get("x").getAsJsonPrimitive().isNumber()
+						? p.get("x").getAsInt() : 20;
+					int y = p.has("y") && p.get("y").isJsonPrimitive() && p.get("y").getAsJsonPrimitive().isNumber()
+						? p.get("y").getAsInt() : 20;
+					boolean opened = !p.has("opened") || !p.get("opened").isJsonPrimitive() || !p.get("opened").getAsJsonPrimitive().isBoolean()
+						|| p.get("opened").getAsBoolean();
+					java.util.Set<String> expanded = new java.util.HashSet<>();
+					if (p.has("expanded") && p.get("expanded").isJsonArray()) {
+						for (JsonElement item : p.get("expanded").getAsJsonArray()) {
+							if (item.isJsonPrimitive() && item.getAsJsonPrimitive().isString()) {
+								expanded.add(item.getAsString());
+							}
+						}
+					}
+					loaded.put(key, new io.qzz.iie.ui.panel.CategoryPositionManager.PanelState(x, y, opened, expanded));
+				}
+			}
+			io.qzz.iie.ui.panel.CategoryPositionManager.setAllStates(loaded);
+		}
+
 		JsonElement modulesElement = root.get("modules");
 		if (modulesElement == null || !modulesElement.isJsonObject()) {
 			return;
@@ -220,6 +249,27 @@ public final class JsonConfigService {
 	private String snapshot() {
 		JsonObject root = new JsonObject();
 		root.addProperty("schemaVersion", SCHEMA_VERSION);
+
+		JsonObject guiLayout = new JsonObject();
+		for (java.util.Map.Entry<String, io.qzz.iie.ui.panel.CategoryPositionManager.PanelState> entry
+			: io.qzz.iie.ui.panel.CategoryPositionManager.getAllStates().entrySet()) {
+			JsonObject obj = new JsonObject();
+			obj.addProperty("x", entry.getValue().x());
+			obj.addProperty("y", entry.getValue().y());
+			obj.addProperty("opened", entry.getValue().opened());
+			if (!entry.getValue().expandedModules().isEmpty()) {
+				com.google.gson.JsonArray expandedArr = new com.google.gson.JsonArray();
+				for (String modId : entry.getValue().expandedModules()) {
+					expandedArr.add(modId);
+				}
+				obj.add("expanded", expandedArr);
+			}
+			guiLayout.add(entry.getKey(), obj);
+		}
+		if (!guiLayout.isEmpty()) {
+			root.add("guiLayout", guiLayout);
+		}
+
 		JsonObject modules = new JsonObject();
 		for (Module module : moduleManager.modules()) {
 			JsonObject moduleObject = new JsonObject();

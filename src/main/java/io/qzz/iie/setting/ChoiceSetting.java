@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public final class ChoiceSetting<T> extends Setting<T> {
-	private final List<ChoiceOption<T>> options;
+	private List<ChoiceOption<T>> options;
 
 	public ChoiceSetting(
 		String id,
@@ -23,6 +23,22 @@ public final class ChoiceSetting<T> extends Setting<T> {
 		return options;
 	}
 
+	public void updateOptions(List<ChoiceOption<T>> newOptions) {
+		this.options = validateOptions(newOptions);
+		if (!hasOptionFor(value())) {
+			reset();
+		}
+	}
+
+	public boolean hasOptionFor(T value) {
+		for (ChoiceOption<T> option : options) {
+			if (option.value().equals(value)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public ChoiceOption<T> selectedOption() {
 		return optionFor(value());
 	}
@@ -37,7 +53,7 @@ public final class ChoiceSetting<T> extends Setting<T> {
 	public void selectOptionId(String optionId) {
 		Objects.requireNonNull(optionId, "optionId");
 		for (ChoiceOption<T> option : options) {
-			if (option.id().equals(optionId)) {
+			if (option.id().equals(optionId) || (option.value() instanceof String str && str.equals(optionId))) {
 				set(option.value());
 				return;
 			}

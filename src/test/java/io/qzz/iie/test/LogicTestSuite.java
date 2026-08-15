@@ -15,12 +15,24 @@ import io.qzz.iie.module.ModuleId;
 import io.qzz.iie.module.ModuleManager;
 import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.module.ModuleShortcutDispatcher;
+import io.qzz.iie.module.impl.movement.autowalk.AutoWalkModule;
+import io.qzz.iie.module.impl.movement.safewalkplus.SafeWalkPlusModule;
+import io.qzz.iie.module.impl.movement.safewalkplus.SafeWalkPlusPolicy;
 import io.qzz.iie.module.impl.combat.autoweb.AutoWebModule;
 import io.qzz.iie.module.impl.gui.clickgui.ClickGuiModule;
 import io.qzz.iie.module.impl.player.autolibrarian.EnchantmentTarget;
 import io.qzz.iie.module.impl.player.autolibrarian.EnchantmentTargetsSetting;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianLogicContract;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianModule;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteModule;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteItemPolicy;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteRotation;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteTargetQueue;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteVisualState;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteTypes.IgnitionItem;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteTypes.ItemPriority;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteTypes.ItemSource;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteTypes.TargetHandling;
 import io.qzz.iie.module.impl.input.invertmouse.InvertMouseHooks;
 import io.qzz.iie.module.impl.input.invertmouse.InvertMouseModule;
 import io.qzz.iie.module.impl.input.invertmouse.InvertMousePitchModule;
@@ -33,6 +45,19 @@ import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderMode;
 import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeHooks;
 import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeModule;
 import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeRenderState;
+import io.qzz.iie.module.impl.render.droppoint.DropPointBlockKind;
+import io.qzz.iie.module.impl.render.droppoint.DropPointColor;
+import io.qzz.iie.module.impl.render.droppoint.DropPointFootprint;
+import io.qzz.iie.module.impl.render.droppoint.DropPointFallDamage;
+import io.qzz.iie.module.impl.render.droppoint.DropPointPolicy;
+import io.qzz.iie.module.impl.render.droppoint.DropPointRole;
+import io.qzz.iie.module.impl.render.droppoint.DropPointModule;
+import io.qzz.iie.module.impl.render.explosionwarning.ExplosionCountdown;
+import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningPlacement;
+import io.qzz.iie.module.impl.render.explosionwarning.ExplosionTargetKind;
+import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningEvent;
+import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningTracker;
+import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningModule;
 import io.qzz.iie.module.impl.combat.autoweb.AutoWebPlanner;
 import io.qzz.iie.module.impl.combat.autoweb.AutoWebRotation;
 import io.qzz.iie.module.impl.combat.autoweb.AutoWebTypes.BlockCell;
@@ -77,7 +102,7 @@ import io.qzz.iie.ui.layout.Rect;
 import io.qzz.iie.ui.message.MessageBoxAppearance;
 import io.qzz.iie.ui.message.MessageBoxManager;
 import io.qzz.iie.ui.message.ModuleStateMessageNotifier;
-import io.qzz.iie.ui.screen.ClickGuiLayoutContract;
+import io.qzz.iie.ui.panel.PanelContract;
 import io.qzz.iie.ui.screen.AutoLibrarianTargetEditorScreen;
 import io.qzz.iie.ui.hud.HudPositionEditorVisibilityContract;
 
@@ -101,11 +126,26 @@ public final class LogicTestSuite {
 		moduleRegistrationRejectsDuplicateIds();
 		moduleLifecycleIsIdempotentAndRollsBackFailures();
 		builtInModulesRegisterFullbrightAndAutoWeb();
+		autoWalkModuleMetadataAndLifecycle();
+		safeWalkPlusCoverageCalculationAndDecision();
+		safeWalkPlusModuleMetadataAndDefaults();
 		invertMouseDeclaresDefaultsAndHooksFollowLifecycle();
 		specialFlipDeclaresDefaultsAndHooksFollowLifecycle();
 		betterHealthBarDeclaresDefaultsAndCapsExtraRows();
 		itemRenderModeDeclaresDefaultsAndHooksFollowLifecycle();
+		dropPointPolicyHonorsSpecialBlocksAndDistanceThreshold();
+		dropPointFootprintSelectsTheLargestCoveredBlock();
+		dropPointColorsClampToExplicitArgbChannels();
+		dropPointModuleDeclaresIndependentColorOpacitySliders();
+		explosionWarningCountdownUsesMillisecondPrecision();
+		explosionWarningPlacementKeepsCreeperTextVisibleAndAppliesOffsets();
+		explosionWarningTrackerReportsRangeAndImpendingTransitionsOnce();
+		explosionWarningModuleDeclaresRecommendedDefaults();
+		autoIgniteDeclaresInterviewedDefaults();
+		autoIgnitePriorityAndTargetHandlingAreDeterministic();
+		autoIgniteRotationIsSmoothAndUsesTheShortestPath();
 		clickGuiAppearanceModuleDeclaresCustomizableDefaults();
+		customFontManagerDirectoryCreationAndScan();
 		messageBoxAppearancePreservesAspectRatio();
 		messageBoxApiQueuesAndExpiresMessages();
 		moduleStateChangesUseSharedMessageBoxApi();
@@ -120,7 +160,7 @@ public final class LogicTestSuite {
 		choiceControlExpandsSelectsAndCancels();
 		choiceControlCollapsesWhenFocusMoves();
 		choiceHoverHighlightsOnlyDrawerOptions();
-		ClickGuiLayoutContract.verifyComfortableCenteredWindow();
+		PanelContract.verify();
 		jsonConfigPersistsModulesSettingsAndKeybinds();
 		autoLibrarianTargetsNormalizeAndPersist();
 		AutoLibrarianLogicContract.verify();
@@ -206,6 +246,291 @@ public final class LogicTestSuite {
 				}
 			}
 		}
+	}
+
+	private static void safeWalkPlusCoverageCalculationAndDecision() {
+		// 玩家完全位于 (0, 0) 的单个固体方块上：碰撞箱 [0.2, 0.8] x [0.2, 0.8]
+		double coverageFull = SafeWalkPlusPolicy.calculateSupportCoverage(
+			0.2, 0.8, 0.2, 0.8,
+			(x, z) -> x == 0 && z == 0
+		);
+		check(closeTo(coverageFull, 1.0), "fully supported player must have 100% coverage");
+		check(!SafeWalkPlusPolicy.shouldForceSneak(coverageFull, 60.0, true), "100% coverage must not force sneak");
+
+		// 玩家悬挂在方块边缘：碰撞箱 [0.7, 1.3] x [0.2, 0.8]，宽 0.6，位于方块 0 的长度为 0.3 (50%)，方块 1 为空气
+		double coverageHalf = SafeWalkPlusPolicy.calculateSupportCoverage(
+			0.7, 1.3, 0.2, 0.8,
+			(x, z) -> x == 0 && z == 0
+		);
+		check(closeTo(coverageHalf, 0.5), "half supported player must have 50% coverage");
+		check(SafeWalkPlusPolicy.shouldForceSneak(coverageHalf, 60.0, true), "50% coverage (< 60%) must force sneak");
+		check(!SafeWalkPlusPolicy.shouldForceSneak(coverageHalf, 40.0, true), "50% coverage (>= 40%) must not force sneak when threshold is 40%");
+		check(!SafeWalkPlusPolicy.shouldForceSneak(coverageHalf, 60.0, false), "airborne player must not force sneak");
+
+		// 完全悬空处于空中：0% 覆盖率
+		double coverageNone = SafeWalkPlusPolicy.calculateSupportCoverage(
+			0.2, 0.8, 0.2, 0.8,
+			(x, z) -> false
+		);
+		check(closeTo(coverageNone, 0.0), "unsupported player must have 0% coverage");
+	}
+
+	private static void safeWalkPlusModuleMetadataAndDefaults() {
+		SafeWalkPlusModule module = new SafeWalkPlusModule();
+		check(module.category().id().equals("movement"), "safe walk plus must reside in movement category");
+		check(module.coverageThreshold().value() == 60.0, "coverage threshold must default to 60%");
+		check(module.coverageThreshold().minimum() == 1.0, "coverage threshold minimum must be 1%");
+		check(module.coverageThreshold().maximum() == 100.0, "coverage threshold maximum must be 100%");
+		check(module.coverageThreshold().step() == 1.0, "coverage threshold step must be 1%");
+	}
+
+	private static void dropPointPolicyHonorsSpecialBlocksAndDistanceThreshold() {
+		check(
+			DropPointPolicy.decide(
+				DropPointBlockKind.NORMAL, 4.0, 100.0, 10.0, false
+			).role() == DropPointRole.NONE,
+			"a drop point at exactly four blocks must stay hidden"
+		);
+		check(
+			DropPointPolicy.decide(
+				DropPointBlockKind.SAFE, 20.0, 100.0, 1.0, false
+			).role() == DropPointRole.SAFE,
+			"safe blocks must remain green even when a generic damage estimate is lethal"
+		);
+		check(
+			DropPointPolicy.decide(
+				DropPointBlockKind.SCAFFOLD, 20.0, 0.0, 20.0, false
+			).role() == DropPointRole.SCAFFOLD_NEEDS_SNEAKING,
+			"scaffolding must request sneaking when the player is not sneaking"
+		);
+		check(
+			DropPointPolicy.decide(
+				DropPointBlockKind.SCAFFOLD, 20.0, 0.0, 20.0, true
+			).role() == DropPointRole.SCAFFOLD_SNEAKING,
+			"sneaking on scaffolding must use the green role"
+		);
+		check(
+			DropPointPolicy.decide(
+				DropPointBlockKind.NORMAL, 20.0, 10.1, 10.0, false
+			).role() == DropPointRole.DANGER,
+			"lethal generic damage must use the danger role"
+		);
+		check(
+			DropPointPolicy.decide(
+				DropPointBlockKind.HAY_BALE, 20.0, DropPointFallDamage.calculate(20.0, 3.0, 1.0, 0.2), 10.0, false
+			).role() == DropPointRole.DEFAULT,
+			"hay bale damage reduction must allow non-lethal landings to use the default role"
+		);
+		check(
+			DropPointFallDamage.calculate(20.0, 3.0, 1.0, 0.2) == 3.0,
+			"hay bale fall damage must use the vanilla 0.2 landing multiplier"
+		);
+	}
+
+	private static void dropPointFootprintSelectsTheLargestCoveredBlock() {
+		DropPointFootprint.BlockCell selected = DropPointFootprint.largestCoveredCell(
+			0.1, 1.9, 0.1, 1.2, 42
+		);
+		check(selected != null, "a non-empty collision footprint must select a block");
+		check(selected.x() == 0 && selected.z() == 0, "the largest overlap must win");
+		check(selected.y() == 42, "the selected cell must preserve the landing plane");
+	}
+
+	private static void dropPointColorsClampToExplicitArgbChannels() {
+		DropPointColor color = new DropPointColor(0.0, 0.5, 1.0, 0.25);
+		check(color.argb() == 0x400080FF, "RGBA slider values must produce the expected ARGB color");
+		expectThrows(
+			IllegalArgumentException.class,
+			() -> new DropPointColor(1.1, 0.0, 0.0, 1.0),
+			"color channels outside the normalized range must be rejected"
+		);
+	}
+
+	private static void dropPointModuleDeclaresIndependentColorOpacitySliders() {
+		DropPointModule module = new DropPointModule(MessageBoxApi.noop());
+		check(module.settings().size() == 21, "drop point must expose four channels for each of five colors plus hint count");
+		check(module.scaffoldHintCount().value() == 2.0, "scaffold hint count must default to two");
+		check(module.scaffoldHintCount().minimum() == 1.0, "scaffold hint count minimum must be one");
+		check(module.scaffoldHintCount().maximum() == 8.0, "scaffold hint count maximum must be eight");
+		check(module.safeColor().opacity() == 0.4, "safe color opacity must be independently adjustable");
+	}
+
+	private static void explosionWarningCountdownUsesMillisecondPrecision() {
+		check(
+			ExplosionCountdown.tntRemainingMillis(20, 0.25F) == 988L,
+			"TNT countdown must interpolate remaining fuse time to milliseconds"
+		);
+		check(
+			ExplosionCountdown.creeperRemainingMillis(0.5F) == 800L,
+			"creeper countdown must map vanilla swelling to the 30 tick fuse"
+		);
+		check(
+			ExplosionCountdown.formatMillis(1234L).equals("1.234 s"),
+			"countdown text must retain millisecond precision"
+		);
+	}
+
+	private static void explosionWarningPlacementKeepsCreeperTextVisibleAndAppliesOffsets() {
+		ExplosionWarningPlacement.Position creeper = ExplosionWarningPlacement.resolve(
+			ExplosionTargetKind.CREEPER,
+			0.0,
+			65.0,
+			0.0,
+			0.3,
+			0.3,
+			3.0,
+			4.0,
+			0.1,
+			0.25,
+			-0.2
+		);
+		check(closeTo(creeper.x(), 0.397), "creeper text must move outside the collision box toward the camera before applying X offset");
+		check(closeTo(creeper.y(), 65.25), "countdown Y offset must be added to the automatic anchor");
+		check(closeTo(creeper.z(), 0.196), "countdown Z offset must be added after the automatic front placement");
+
+		ExplosionWarningPlacement.Position tnt = ExplosionWarningPlacement.resolve(
+			ExplosionTargetKind.TNT,
+			10.0,
+			70.0,
+			20.0,
+			0.49,
+			0.49,
+			0.0,
+			0.0,
+			-0.5,
+			0.5,
+			1.0
+		);
+		check(closeTo(tnt.x(), 9.5) && closeTo(tnt.y(), 70.5) && closeTo(tnt.z(), 21.0),
+			"TNT countdown placement must preserve its automatic anchor and apply all three offsets");
+	}
+
+	private static void explosionWarningTrackerReportsRangeAndImpendingTransitionsOnce() {
+		ExplosionWarningTracker tracker = new ExplosionWarningTracker();
+		check(
+			tracker.observe(7, ExplosionTargetKind.CREEPER, true, false)
+				.contains(ExplosionWarningEvent.ENTERED_RANGE),
+			"a creeper entering range must emit one range event"
+		);
+		check(
+			tracker.observe(7, ExplosionTargetKind.CREEPER, true, false).isEmpty(),
+			"the same creeper must not repeat the range event every tick"
+		);
+		check(
+			tracker.observe(7, ExplosionTargetKind.CREEPER, true, true)
+				.contains(ExplosionWarningEvent.IMPENDING_EXPLOSION),
+			"the transition into the fuse state must emit one impending event"
+		);
+		check(
+			tracker.observe(7, ExplosionTargetKind.CREEPER, true, true).isEmpty(),
+			"the same fuse state must not repeat the impending event every tick"
+		);
+		tracker.observe(7, ExplosionTargetKind.CREEPER, false, false);
+		check(
+			tracker.observe(7, ExplosionTargetKind.CREEPER, true, false)
+				.contains(ExplosionWarningEvent.ENTERED_RANGE),
+			"leaving and re-entering range must arm a new range event"
+		);
+		check(
+			tracker.observe(8, ExplosionTargetKind.TNT, true, true)
+				.contains(ExplosionWarningEvent.IMPENDING_EXPLOSION),
+			"TNT must emit the impending event without a creeper range event"
+		);
+		tracker.observe(9, ExplosionTargetKind.TNT, false, false);
+		check(
+			tracker.observe(9, ExplosionTargetKind.TNT, true, true)
+				.contains(ExplosionWarningEvent.IMPENDING_EXPLOSION),
+			"an already-primed TNT entering the radius must still warn once"
+		);
+	}
+
+	private static void explosionWarningModuleDeclaresRecommendedDefaults() {
+		ExplosionWarningModule module = new ExplosionWarningModule(MessageBoxApi.noop());
+		check(module.radius().value() == 5.0, "explosion warning radius must default to five blocks");
+		check(module.radius().minimum() == 1.0 && module.radius().maximum() == 10.0,
+			"explosion warning radius must be constrained to one through ten blocks");
+		check(module.impendingMessage().value(), "impending explosion messages must default to enabled");
+		check(module.creeperRangeMessage().value(), "creeper range messages must default to enabled");
+		check(module.messageColor() == 0xFFFF0000, "explosion warning message color must default to red");
+		check(module.countdownOffsetX().value() == 0.0, "countdown X offset must default to zero");
+		check(module.countdownOffsetY().value() == 0.0, "countdown Y offset must default to zero");
+		check(module.countdownOffsetZ().value() == 0.0, "countdown Z offset must default to zero");
+		check(module.countdownOffsetX().minimum() == -2.0 && module.countdownOffsetX().maximum() == 2.0,
+			"countdown offsets must allow precise adjustment from minus two through two blocks");
+	}
+
+	private static void autoIgniteDeclaresInterviewedDefaults() {
+		AutoIgniteModule module = new AutoIgniteModule();
+		check(module.category().id().equals("player"), "auto ignite must appear in the player category");
+		check(module.itemSource().value() == ItemSource.HOTBAR, "direct hotbar access must be the default source");
+		check(module.itemPriority().value() == ItemPriority.FLINT_FIRST, "flint and steel must be preferred by default");
+		check(module.restoreAfterFlint().value(), "flint ignition must return to the previous TNT slot by default");
+		check(!module.cameraFollows().value(), "client camera following must default to disabled");
+		check(module.rotationTicks().value() == 1.0, "rotation and restoration must default to one tick each");
+		check(module.rotationTicks().minimum() == 1.0 && module.rotationTicks().maximum() == 10.0,
+			"rotation time must be constrained to one through ten ticks");
+		check(module.targetHandling().value() == TargetHandling.LATEST_ONLY,
+			"new TNT placements must replace unfinished targets by default");
+		check(!module.strictInteraction().value(), "strict reach and visibility checks must default to disabled");
+		check(!module.keybind().orElseThrow().value().isBound(), "auto ignite shortcut must default to unbound");
+	}
+
+	private static void autoIgnitePriorityAndTargetHandlingAreDeterministic() {
+		check(
+			ItemPriority.FLINT_FIRST.order().equals(List.of(IgnitionItem.FLINT_AND_STEEL, IgnitionItem.FIRE_CHARGE)),
+			"flint-first mode must use fire charges only as a fallback"
+		);
+		check(
+			ItemPriority.FIRE_CHARGE_FIRST.order().equals(List.of(IgnitionItem.FIRE_CHARGE, IgnitionItem.FLINT_AND_STEEL)),
+			"fire-charge-first mode must use flint only as a fallback"
+		);
+		check(ItemPriority.FLINT_ONLY.order().equals(List.of(IgnitionItem.FLINT_AND_STEEL)),
+			"flint-only mode must not fall back to fire charges");
+		check(ItemPriority.FIRE_CHARGE_ONLY.order().equals(List.of(IgnitionItem.FIRE_CHARGE)),
+			"fire-charge-only mode must not fall back to flint");
+		check(AutoIgniteItemPolicy.shouldRestoreSelection(
+			ItemSource.HOTBAR, IgnitionItem.FLINT_AND_STEEL, true
+		), "enabled flint restoration must return to the previous TNT slot");
+		check(!AutoIgniteItemPolicy.shouldRestoreSelection(
+			ItemSource.HOTBAR, IgnitionItem.FLINT_AND_STEEL, false
+		), "disabled flint restoration must leave flint selected");
+		check(AutoIgniteItemPolicy.shouldRestoreSelection(
+			ItemSource.HOTBAR, IgnitionItem.FIRE_CHARGE, false
+		), "fire charges must always return to the previous TNT slot");
+		check(AutoIgniteItemPolicy.shouldRestoreSelection(
+			ItemSource.SILENT_INVENTORY, IgnitionItem.FLINT_AND_STEEL, false
+		), "silent inventory swaps must always restore their original slot");
+
+		AutoIgniteTargetQueue targets = new AutoIgniteTargetQueue();
+		targets.offer(10L, TargetHandling.QUEUE);
+		targets.offer(20L, TargetHandling.QUEUE);
+		check(targets.peek().orElseThrow() == 10L && targets.size() == 2,
+			"queue mode must preserve TNT placement order");
+		targets.offer(30L, TargetHandling.LATEST_ONLY);
+		check(targets.peek().orElseThrow() == 30L && targets.size() == 1,
+			"latest-only mode must replace all unfinished TNT targets");
+		targets.clear();
+		targets.offer(40L, TargetHandling.QUEUE);
+		targets.offer(40L, TargetHandling.QUEUE);
+		check(targets.size() == 2,
+			"two confirmed TNT placements at the same block position must remain distinct tasks");
+	}
+
+	private static void autoIgniteRotationIsSmoothAndUsesTheShortestPath() {
+		check(closeTo(AutoIgniteRotation.interpolateAngle(170.0F, -170.0F, 0.25), 173.125),
+			"auto ignite yaw must ease across the wrapped shortest path");
+		check(closeTo(AutoIgniteRotation.interpolateLinear(-20.0F, 20.0F, 0.25), -13.75),
+			"auto ignite pitch must use the same smooth interpolation curve");
+		check(closeTo(AutoIgniteRotation.interpolateAngle(10.0F, 90.0F, 2.0), 90.0),
+			"rotation progress must clamp at the target");
+		AutoIgniteVisualState.publish(90.0F, -30.0F, true);
+		check(AutoIgniteVisualState.snapshot().active(), "third-person preview must become active during rotation");
+		check(AutoIgniteVisualState.snapshot().suppressMouseTurn(),
+			"camera-follow mode must suppress manual mouse rotation");
+		check(closeTo(AutoIgniteVisualState.snapshot().pitch(), -30.0),
+			"third-person preview must retain vertical head pitch");
+		AutoIgniteVisualState.clear();
+		check(!AutoIgniteVisualState.snapshot().active(), "preview state must clear after restoration");
 	}
 
 	private static void autoLibrarianTargetsNormalizeAndPersist() {
@@ -370,7 +695,12 @@ public final class LogicTestSuite {
 			"ClickGUI appearance derives from its gui package"
 		);
 		check(!module.metadata().toggleable(), "appearance-only module must not expose a fake toggle");
-		check(module.settings().size() == 9, "all requested Click GUI values must be GUI settings");
+		check(module.settings().size() == 18, "all requested Click GUI values must be GUI settings");
+		check(module.language().value().equals("auto"), "language defaults to auto");
+		check(module.customFont().value().equals("default"), "customFont defaults to default");
+		check(module.armorHudEnabled().value(), "armor HUD enabled defaults to true");
+		check(module.potionHudEnabled().value(), "potion HUD enabled defaults to true");
+		check(module.arrayListEnabled().value(), "arrayList HUD enabled defaults to true");
 		check(
 			module.openShortcut().value().keyCode() == 344,
 			"Click GUI shortcut must default to right Shift"
@@ -391,6 +721,59 @@ public final class LogicTestSuite {
 			manager.setEnabled(module.id(), true) instanceof ModuleChangeResult.Failed,
 			"appearance-only module must reject enabled-state changes"
 		);
+	}
+
+	private static void customFontManagerDirectoryCreationAndScan() {
+		io.qzz.iie.font.ClientFontManager.ensureDirectoriesExist();
+
+		List<Path> dirs = io.qzz.iie.font.ClientFontManager.getFontDirectories();
+		check(!dirs.isEmpty(), "must have at least one font directory");
+		for (Path dir : dirs) {
+			check(Files.exists(dir) && Files.isDirectory(dir), "font directory must be automatically created");
+		}
+
+		Path primaryDir = dirs.get(0);
+		Path testTtf = primaryDir.resolve("HarmonyOS-Bold.TTF");
+		Path testOtf = primaryDir.resolve("宋体_Regular.otf");
+		Path testTxt = primaryDir.resolve("ignore.txt");
+
+		try {
+			Files.writeString(testTtf, "dummy ttf");
+			Files.writeString(testOtf, "dummy otf");
+			Files.writeString(testTxt, "dummy txt");
+
+			List<String> scanned = io.qzz.iie.font.ClientFontManager.scanAvailableFontFiles();
+			check(scanned.contains("HarmonyOS-Bold.TTF"), "scanned must contain HarmonyOS-Bold.TTF");
+			check(scanned.contains("宋体_Regular.otf"), "scanned must contain 宋体_Regular.otf");
+			check(!scanned.contains("ignore.txt"), "scanned must ignore non-font files");
+
+			List<ChoiceOption<String>> options = io.qzz.iie.font.ClientFontManager.getAvailableFontOptions();
+			check(options.stream().anyMatch(o -> o.id().equals("default")), "options must contain default");
+			check(options.stream().anyMatch(o -> o.value().equals("HarmonyOS-Bold.TTF")), "options must contain HarmonyOS-Bold.TTF");
+			check(options.stream().anyMatch(o -> o.value().equals("宋体_Regular.otf")), "options must contain 宋体_Regular.otf");
+
+			// Verify ChoiceSetting updateOptions accepts these options cleanly without throwing
+			ChoiceSetting<String> setting = new ChoiceSetting<>(
+				"custom_font",
+				"test.font",
+				"default",
+				options
+			);
+			setting.updateOptions(options);
+			check(setting.options().size() >= 3, "setting must have at least 3 options");
+
+			io.qzz.iie.font.ClientFontManager.applyFont("default");
+			check(io.qzz.iie.font.ClientFontManager.getActiveFontDescription() == null, "default font description must be null");
+		} catch (IOException e) {
+			throw new AssertionError("font scan test failed", e);
+		} finally {
+			try {
+				Files.deleteIfExists(testTtf);
+				Files.deleteIfExists(testOtf);
+				Files.deleteIfExists(testTxt);
+			} catch (IOException ignored) {
+			}
+		}
 	}
 
 	private static void hudPositionDragCommitsOnlyOnRelease() {
@@ -524,7 +907,7 @@ public final class LogicTestSuite {
 			"disable message must use the shared translation key"
 		);
 
-		unsubscribe.run();
+			unsubscribe.run();
 		manager.setEnabled(module.id(), true);
 		check(notifications.size() == 2, "unsubscribed notifier must remain silent");
 	}
@@ -570,7 +953,7 @@ public final class LogicTestSuite {
 
 		BuiltInModules.register(manager);
 
-		check(manager.modules().size() == 9, "only production built-ins must be registered in the GUI");
+		check(manager.modules().size() == 14, "only production built-ins must be registered in the GUI");
 		Module fullbright = manager.find(ModuleId.of("client", "fullbright")).orElseThrow();
 		check(
 			fullbright.category().id().equals("render"),
@@ -580,6 +963,16 @@ public final class LogicTestSuite {
 		check(
 			autoWeb.category().id().equals("combat"),
 			"auto web derives from its combat package"
+		);
+		Module autoWalk = manager.find(ModuleId.of("client", "auto_walk")).orElseThrow();
+		check(
+			autoWalk.category().id().equals("movement"),
+			"auto walk derives from its movement package"
+		);
+		Module safeWalkPlus = manager.find(ModuleId.of("client", "safe_walk_plus")).orElseThrow();
+		check(
+			safeWalkPlus.category().id().equals("movement"),
+			"safe walk plus derives from its movement package"
 		);
 		check(
 			manager.find(ModuleId.of("client", "click_gui")).isPresent(),
@@ -608,6 +1001,32 @@ public final class LogicTestSuite {
 		check(
 			manager.find(ModuleId.of("client", "item_render_mode")).isPresent(),
 			"item render mode must be registered in the GUI"
+		);
+		check(
+			manager.find(ModuleId.of("client", "drop_point")).isPresent(),
+			"drop point must be registered in the GUI"
+		);
+		check(
+			manager.find(ModuleId.of("client", "explosion_warning")).isPresent(),
+			"explosion warning must be registered in the GUI"
+		);
+		check(
+			manager.find(ModuleId.of("client", "auto_ignite")).isPresent(),
+			"auto ignite must be registered in the GUI"
+		);
+	}
+
+	private static void autoWalkModuleMetadataAndLifecycle() {
+		AutoWalkModule module = new AutoWalkModule();
+		check(
+			module.category().id().equals("movement"),
+			"auto walk derives from its movement package"
+		);
+		check(module.metadata().toggleable(), "auto walk must expose a real toggle");
+		check(module.settings().size() == 1, "auto walk must declare only its shortcut");
+		check(
+			!module.keybind().orElseThrow().value().isBound(),
+			"auto walk shortcut must default unbound"
 		);
 	}
 

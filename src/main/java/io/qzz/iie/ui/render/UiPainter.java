@@ -43,8 +43,33 @@ public final class UiPainter {
 		graphics.fill(x, y, x + width, y + height, color);
 	}
 
+	public void renderItem(net.minecraft.world.item.ItemStack stack, int x, int y) {
+		if (stack == null || stack.isEmpty()) {
+			return;
+		}
+		graphics.item(stack, x, y);
+	}
+
+	public void renderEffectIcon(net.minecraft.resources.Identifier effectId, int x, int y, int width, int height) {
+		if (effectId == null) {
+			return;
+		}
+		net.minecraft.resources.Identifier spriteId = net.minecraft.resources.Identifier.fromNamespaceAndPath(
+			effectId.getNamespace(),
+			"mob_effect/" + effectId.getPath()
+		);
+		graphics.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, spriteId, x, y, width, height);
+	}
+
+	public void renderSprite(net.minecraft.resources.Identifier spriteId, int x, int y, int width, int height) {
+		if (spriteId == null) {
+			return;
+		}
+		graphics.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, spriteId, x, y, width, height);
+	}
+
 	public void roundedRect(int x, int y, int width, int height, int radius, int color) {
-		if (width <= 0 || height <= 0) {
+		if (width <= 0 || height <= 0 || (color >>> 24) == 0) {
 			return;
 		}
 		int safeRadius = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
@@ -53,53 +78,68 @@ public final class UiPainter {
 			return;
 		}
 
-		fill(x, y + safeRadius, width, height - safeRadius * 2, color);
-		for (int row = 0; row < safeRadius; row++) {
-			double verticalDistance = safeRadius - (row + 0.5);
-			double circleExtent = Math.sqrt(Math.max(
-				0.0,
-				safeRadius * (double) safeRadius - verticalDistance * verticalDistance
-			));
-			double boundary = safeRadius - circleExtent;
-			int fullInset = (int) Math.ceil(boundary);
-			drawAntialiasedRow(
-				x,
-				y + row,
-				width,
-				fullInset,
-				boundary,
-				color
-			);
-			drawAntialiasedRow(
-				x,
-				y + height - row - 1,
-				width,
-				fullInset,
-				boundary,
-				color
-			);
+		int middleHeight = height - safeRadius * 2;
+		if (middleHeight > 0) {
+			fill(x, y + safeRadius, width, middleHeight, color);
+		}
+
+		for (int py = 0; py < safeRadius; py++) {
+			int topY = y + py;
+			int bottomY = y + height - 1 - py;
+			int solidMinPx = safeRadius;
+
+			for (int px = 0; px < safeRadius; px++) {
+				double coverage = calculateCornerCoverage(px, py, safeRadius);
+				if (coverage <= 0.0) {
+					continue;
+				}
+				if (coverage >= 1.0) {
+					solidMinPx = px;
+					break;
+				}
+				int edgeColor = withAlphaCoverage(color, coverage);
+				fill(x + px, topY, 1, 1, edgeColor);
+				int rightX = x + width - 1 - px;
+				if (rightX != x + px) {
+					fill(rightX, topY, 1, 1, edgeColor);
+				}
+				if (bottomY != topY) {
+					fill(x + px, bottomY, 1, 1, edgeColor);
+					if (rightX != x + px) {
+						fill(rightX, bottomY, 1, 1, edgeColor);
+					}
+				}
+			}
+
+			int solidWidth = width - solidMinPx * 2;
+			if (solidWidth > 0) {
+				fill(x + solidMinPx, topY, solidWidth, 1, color);
+				if (bottomY != topY) {
+					fill(x + solidMinPx, bottomY, solidWidth, 1, color);
+				}
+			}
 		}
 	}
 
-	private void drawAntialiasedRow(
-		int x,
-		int y,
-		int width,
-		int fullInset,
-		double boundary,
-		int color
-	) {
-		fill(x + fullInset, y, width - fullInset * 2, 1, color);
-		int edgePixel = fullInset - 1;
-		double coverage = fullInset - boundary;
-		if (edgePixel >= 0 && coverage > 0.0) {
-			int edgeColor = withAlphaCoverage(color, coverage);
-			fill(x + edgePixel, y, 1, 1, edgeColor);
-			int rightEdgeX = x + width - edgePixel - 1;
-			if (rightEdgeX != x + edgePixel) {
-				fill(rightEdgeX, y, 1, 1, edgeColor);
+	private static double calculateCornerCoverage(int px, int py, int radius) {
+		double r2 = (double) radius * radius;
+		int insideSamples = 0;
+
+		for (int subY = 0; subY < 4; subY++) {
+			double sy = py + (subY + 0.5) * 0.25;
+			double dy = radius - sy;
+
+			for (int subX = 0; subX < 4; subX++) {
+				double sx = px + (subX + 0.5) * 0.25;
+				double dx = radius - sx;
+
+				if (dx <= 0.0 || dy <= 0.0 || (dx * dx + dy * dy <= r2)) {
+					insideSamples++;
+				}
 			}
 		}
+
+		return insideSamples / 16.0;
 	}
 
 	/**
@@ -204,6 +244,89 @@ public final class UiPainter {
 			}
 		}
 		return text.substring(0, text.offsetByCodePoints(0, low)) + ellipsis;
+	}
+
+	public static int calculateMarqueeOffset(
+		int textWidth,
+		int availableWidth,
+		boolean hovered,
+		long time
+	) {
+		if (!hovered || textWidth <= availableWidth) {
+			return 0;
+		}
+		int overflow = textWidth - availableWidth;
+		long cycle = 2000L + overflow * 40L;
+		long phase = time % cycle;
+		long pauseStart = 600L;
+		long pauseEnd = 600L;
+		long scrollDuration = Math.max(1L, cycle - pauseStart - pauseEnd);
+		if (phase < pauseStart) {
+			return 0;
+		} else if (phase < pauseStart + scrollDuration) {
+			double progress = (double) (phase - pauseStart) / (double) scrollDuration;
+			return (int) Math.round(overflow * progress);
+		} else {
+			return overflow;
+		}
+	}
+
+	public void marqueeText(
+		String text,
+		int x,
+		int y,
+		int availableWidth,
+		int color,
+		boolean hovered,
+		long time
+	) {
+		int width = textWidth(text);
+		if (width <= availableWidth) {
+			text(text, x, y, color);
+			return;
+		}
+
+		int scrollOffset = calculateMarqueeOffset(width, availableWidth, hovered, time);
+
+		enableScissor(x, y - 2, x + availableWidth, y + lineHeight() + 2);
+		try {
+			text(text, x - scrollOffset, y, color);
+		} finally {
+			disableScissor();
+		}
+	}
+
+	public void marqueeTwoPartText(
+		String part1,
+		int color1,
+		String part2,
+		int color2,
+		int x,
+		int y,
+		int availableWidth,
+		boolean hovered,
+		long time
+	) {
+		int w1 = textWidth(part1);
+		int w2 = textWidth(part2);
+		int totalWidth = w1 + w2;
+
+		if (totalWidth <= availableWidth) {
+			text(part1, x, y, color1);
+			text(part2, x + w1, y, color2);
+			return;
+		}
+
+		int scrollOffset = calculateMarqueeOffset(totalWidth, availableWidth, hovered, time);
+
+		enableScissor(x, y - 2, x + availableWidth, y + lineHeight() + 2);
+		try {
+			int drawX = x - scrollOffset;
+			text(part1, drawX, y, color1);
+			text(part2, drawX + w1, y, color2);
+		} finally {
+			disableScissor();
+		}
 	}
 
 	public void withTranslation(float x, float y, Runnable renderAction) {

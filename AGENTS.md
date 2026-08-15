@@ -11,7 +11,7 @@
 - 自定义页面仍可直接组合本地 GUI 组件。
 - 模块、设置、GUI、配置和 Minecraft 适配层之间保持清晰依赖方向。
 
-当前仓库已实现模块、基础设置、Click GUI、动画、统一输入路由、扩展入口、JSON 配置持久化、消息提示框 API、通用 HUD 定位编辑 API、ClickGUI 外观模块、Fullbright、Better Health Bar 和 Auto Web。Friend 尚未接入；实现新功能前以真实源码和 `docs/specs/` 为准，不得把规划中的类型当作已经存在。
+当前仓库已实现模块、基础设置、Click GUI、动画、统一输入路由、扩展入口、JSON 配置持久化、消息提示框 API、通用 HUD 定位编辑 API、ClickGUI 外观模块、Fullbright、Better Health Bar、Auto Web、落点预览、爆炸预警和自动点火。Friend 尚未接入；实现新功能前以真实源码和 `docs/specs/` 为准，不得把规划中的类型当作已经存在。
 
 Click GUI 的规范视觉参考是根目录 `gui-example.png`，详细的信息结构、组件 API、主题令牌和验收条件见 `docs/specs/click-gui-api.md`。实现 GUI 前必须读取该规格；图片只作为设计参考，不能直接渲染成背景。
 

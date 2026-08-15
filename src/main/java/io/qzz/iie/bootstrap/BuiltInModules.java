@@ -2,12 +2,17 @@ package io.qzz.iie.bootstrap;
 
 import io.qzz.iie.api.message.MessageBoxApi;
 import io.qzz.iie.module.ModuleManager;
+import io.qzz.iie.module.impl.movement.autowalk.AutoWalkModule;
+import io.qzz.iie.module.impl.movement.safewalkplus.SafeWalkPlusModule;
 import io.qzz.iie.module.impl.combat.autoweb.AutoWebModule;
 import io.qzz.iie.module.impl.gui.clickgui.ClickGuiModule;
 import io.qzz.iie.module.impl.render.fullbright.FullbrightModule;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarModule;
 import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeModule;
+import io.qzz.iie.module.impl.render.droppoint.DropPointModule;
+import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningModule;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianModule;
+import io.qzz.iie.module.impl.player.autoignite.AutoIgniteModule;
 import io.qzz.iie.module.impl.input.invertmouse.InvertMouseModule;
 import io.qzz.iie.module.impl.input.invertmouse.InvertMousePitchModule;
 import io.qzz.iie.module.impl.input.specialflip.SpecialFlipModule;
@@ -27,7 +32,10 @@ public final class BuiltInModules {
 		MessageBoxApi messages
 	) {
 		ModuleManager manager = Objects.requireNonNull(moduleManager, "moduleManager");
+		manager.register(new AutoWalkModule());
+		manager.register(new SafeWalkPlusModule());
 		manager.register(new AutoWebModule());
+		manager.register(new AutoIgniteModule());
 		manager.register(new AutoLibrarianModule(
 			Objects.requireNonNull(messages, "messages")
 		));
@@ -37,6 +45,8 @@ public final class BuiltInModules {
 		manager.register(new FullbrightModule());
 		manager.register(new BetterHealthBarModule());
 		manager.register(new ItemRenderModeModule());
+		manager.register(new DropPointModule(messages));
+		manager.register(new ExplosionWarningModule(messages));
 		return manager.register(new ClickGuiModule());
 	}
 }
