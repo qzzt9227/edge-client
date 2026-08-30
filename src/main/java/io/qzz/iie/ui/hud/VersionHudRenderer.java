@@ -115,6 +115,6 @@ public final class VersionHudRenderer implements HudElementPreview {
 				String version = container.getMetadata().getVersion().getFriendlyString();
 				return name + " v" + version;
 			})
-			.orElse("Edge Client v1.0.0");
+			.orElse("Edge Client v1.2.1");
 	}
 }
