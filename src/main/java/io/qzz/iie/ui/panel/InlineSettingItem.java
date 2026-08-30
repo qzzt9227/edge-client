@@ -18,7 +18,8 @@ public interface InlineSettingItem {
 	}
 
 	default boolean isVisible() {
-		return true;
+		Setting<?> s = setting();
+		return s == null || s.isVisible();
 	}
 
 	void render(

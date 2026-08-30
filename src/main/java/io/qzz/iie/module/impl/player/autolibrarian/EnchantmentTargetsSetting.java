@@ -19,7 +19,11 @@ public final class EnchantmentTargetsSetting
 
 	public static final String EDITOR_ID = "auto_librarian_targets";
 	private static final List<EnchantmentTarget> DEFAULT_TARGETS = List.of(
-		new EnchantmentTarget("minecraft:unbreaking", 3, false, 1, 64)
+		new EnchantmentTarget("minecraft:unbreaking", 3, false, 4, 64),
+		new EnchantmentTarget("minecraft:frost_walker", 2, false, 1, 64),
+		new EnchantmentTarget("minecraft:protection", 4, false, 1, 64),
+		new EnchantmentTarget("minecraft:punch", 2, false, 18, 64),
+		new EnchantmentTarget("minecraft:knockback", 1, false, 1, 64)
 	);
 
 	public EnchantmentTargetsSetting(String id, String translationKey) {

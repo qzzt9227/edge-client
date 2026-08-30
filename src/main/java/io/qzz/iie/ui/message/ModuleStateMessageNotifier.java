@@ -35,6 +35,9 @@ public final class ModuleStateMessageNotifier {
 				if (previous == null || previous == module.isEnabled()) {
 					continue;
 				}
+				if (!module.notification().value()) {
+					continue;
+				}
 				String messageKey = module.isEnabled()
 					? "client.message.module.enabled"
 					: "client.message.module.disabled";

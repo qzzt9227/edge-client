@@ -1,5 +1,6 @@
 package io.qzz.iie.module;
 
+import io.qzz.iie.setting.BooleanSetting;
 import io.qzz.iie.setting.Setting;
 import io.qzz.iie.setting.SettingCollection;
 import io.qzz.iie.setting.KeybindSetting;
@@ -11,6 +12,11 @@ import java.util.Optional;
 public abstract class Module {
 	private final ModuleMetadata metadata;
 	private final SettingCollection settings = new SettingCollection();
+	private final BooleanSetting notification = setting(new BooleanSetting(
+		"notification",
+		"client.setting.module_notification",
+		true
+	));
 	private KeybindSetting moduleKeybind;
 	private boolean enabled;
 	private boolean disableRequested;
@@ -61,6 +67,10 @@ public abstract class Module {
 
 	public final Optional<KeybindSetting> keybind() {
 		return Optional.ofNullable(moduleKeybind);
+	}
+
+	public final BooleanSetting notification() {
+		return notification;
 	}
 
 	protected final <S extends Setting<?>> S setting(S setting) {

@@ -12,6 +12,8 @@ import io.qzz.iie.module.impl.gui.clickgui.ClickGuiModule;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarHooks;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarHudRenderer;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarModule;
+import io.qzz.iie.module.impl.render.crystalanimation.CrystalAnimationHooks;
+import io.qzz.iie.module.impl.render.crystalanimation.CrystalAnimationModule;
 import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeHooks;
 import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeModule;
 import io.qzz.iie.module.impl.render.droppoint.DropPointHooks;
@@ -20,6 +22,15 @@ import io.qzz.iie.module.impl.render.droppoint.DropPointWorldRenderer;
 import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningHooks;
 import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningModule;
 import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningWorldRenderer;
+import io.qzz.iie.module.impl.render.freelook.FreeLookHooks;
+import io.qzz.iie.module.impl.render.freelook.FreeLookModule;
+import io.qzz.iie.module.impl.render.norender.NoRenderHooks;
+import io.qzz.iie.module.impl.render.norender.NoRenderModule;
+import io.qzz.iie.module.impl.render.zoom.ZoomHooks;
+import io.qzz.iie.module.impl.render.zoom.ZoomModule;
+import io.qzz.iie.module.impl.player.packetmine.PacketMineModule;
+import io.qzz.iie.module.impl.player.packetmine.PacketMineHooks;
+import io.qzz.iie.module.impl.player.packetmine.PacketMineWorldRenderer;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianModule;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianTradeReporter;
 import io.qzz.iie.module.impl.player.autoignite.AutoIgniteHooks;
@@ -39,6 +50,8 @@ import io.qzz.iie.ui.hud.HudPositionEditorManager;
 import io.qzz.iie.ui.hud.ArmorDurabilityHudRenderer;
 import io.qzz.iie.ui.hud.PotionEffectsHudRenderer;
 import io.qzz.iie.ui.hud.ActiveModulesHudRenderer;
+import io.qzz.iie.ui.hud.CpsHudRenderer;
+import io.qzz.iie.ui.hud.VersionHudRenderer;
 import io.qzz.iie.ui.screen.HudEditorScreen;
 import io.qzz.iie.module.impl.gui.clickgui.HudEditorSetting;
 import io.qzz.iie.ui.setting.SettingEditorManager;
@@ -80,6 +93,8 @@ public final class ClientRuntime {
 		InvertMouseHooks.install(invertMouse);
 		InvertMouseHooks.installPitch(invertMousePitch);
 		SpecialFlipHooks.install(specialFlip);
+		CrystalAnimationModule crystalAnimation = crystalAnimationModule();
+		CrystalAnimationHooks.install(crystalAnimation);
 		ItemRenderModeModule itemRenderMode = itemRenderModeModule();
 		ItemRenderModeHooks.install(itemRenderMode);
 		DropPointModule dropPoint = dropPointModule();
@@ -88,6 +103,15 @@ public final class ClientRuntime {
 		ExplosionWarningModule explosionWarning = explosionWarningModule();
 		ExplosionWarningHooks.install(explosionWarning);
 		ExplosionWarningWorldRenderer.install(explosionWarning);
+		ZoomModule zoom = zoomModule();
+		ZoomHooks.install(zoom);
+		FreeLookModule freeLook = freeLookModule();
+		FreeLookHooks.install(freeLook);
+		NoRenderModule noRender = noRenderModule();
+		NoRenderHooks.install(noRender);
+		PacketMineModule packetMine = packetMineModule();
+		PacketMineHooks.install(packetMine);
+		PacketMineWorldRenderer.install(packetMine);
 		hudPositions.installVanillaVisibility();
 		loadExtensions(messages, hudPositions, settingEditors);
 		io.qzz.iie.font.ClientFontManager.ensureDirectoriesExist();
@@ -187,6 +211,14 @@ public final class ClientRuntime {
 			.orElseThrow();
 	}
 
+	private CrystalAnimationModule crystalAnimationModule() {
+		return moduleManager.modules().stream()
+			.filter(CrystalAnimationModule.class::isInstance)
+			.map(CrystalAnimationModule.class::cast)
+			.findFirst()
+			.orElseThrow();
+	}
+
 	private ItemRenderModeModule itemRenderModeModule() {
 		return moduleManager.modules().stream()
 			.filter(ItemRenderModeModule.class::isInstance)
@@ -207,6 +239,38 @@ public final class ClientRuntime {
 		return moduleManager.modules().stream()
 			.filter(ExplosionWarningModule.class::isInstance)
 			.map(ExplosionWarningModule.class::cast)
+			.findFirst()
+			.orElseThrow();
+	}
+
+	private ZoomModule zoomModule() {
+		return moduleManager.modules().stream()
+			.filter(ZoomModule.class::isInstance)
+			.map(ZoomModule.class::cast)
+			.findFirst()
+			.orElseThrow();
+	}
+
+	private FreeLookModule freeLookModule() {
+		return moduleManager.modules().stream()
+			.filter(FreeLookModule.class::isInstance)
+			.map(FreeLookModule.class::cast)
+			.findFirst()
+			.orElseThrow();
+	}
+
+	private NoRenderModule noRenderModule() {
+		return moduleManager.modules().stream()
+			.filter(NoRenderModule.class::isInstance)
+			.map(NoRenderModule.class::cast)
+			.findFirst()
+			.orElseThrow();
+	}
+
+	private PacketMineModule packetMineModule() {
+		return moduleManager.modules().stream()
+			.filter(PacketMineModule.class::isInstance)
+			.map(PacketMineModule.class::cast)
 			.findFirst()
 			.orElseThrow();
 	}
@@ -320,6 +384,32 @@ public final class ClientRuntime {
 			VanillaHudElements.SCOREBOARD,
 			Client.id("array_list"),
 			arrayListRenderer::extract
+		);
+
+		// 4. CPS 显示 HUD
+		CpsHudRenderer cpsRenderer = new CpsHudRenderer(
+			clickGui.cpsHudEnabled(),
+			clickGui.cpsHudPosition(),
+			hudPositions::isEditing
+		);
+		hudPositions.register(clickGui.cpsHudPosition(), cpsRenderer);
+		HudElementRegistry.attachElementAfter(
+			VanillaHudElements.SCOREBOARD,
+			Client.id("cps"),
+			cpsRenderer::extract
+		);
+
+		// 5. 客户端版本 HUD
+		VersionHudRenderer versionRenderer = new VersionHudRenderer(
+			clickGui.versionHudEnabled(),
+			clickGui.versionHudPosition(),
+			hudPositions::isEditing
+		);
+		hudPositions.register(clickGui.versionHudPosition(), versionRenderer);
+		HudElementRegistry.attachElementAfter(
+			VanillaHudElements.SCOREBOARD,
+			Client.id("version_hud"),
+			versionRenderer::extract
 		);
 	}
 

@@ -22,7 +22,7 @@ public final class AutoWebModule extends Module {
 	private final ChoiceSetting<TargetPriority> targetPriority = setting(new ChoiceSetting<>(
 		"target_priority",
 		"client.setting.auto_web.target_priority",
-		TargetPriority.NEAREST,
+		TargetPriority.CROSSHAIR,
 		List.of(
 			option("nearest", TargetPriority.NEAREST),
 			option("lowest_health", TargetPriority.LOWEST_HEALTH),
@@ -32,7 +32,7 @@ public final class AutoWebModule extends Module {
 	private final ChoiceSetting<TargetType> targetType = setting(new ChoiceSetting<>(
 		"target_type",
 		"client.setting.auto_web.target_type",
-		TargetType.PLAYER,
+		TargetType.ALL,
 		List.of(
 			option("player", TargetType.PLAYER),
 			option("friendly", TargetType.FRIENDLY),
@@ -54,7 +54,7 @@ public final class AutoWebModule extends Module {
 	private final DoubleSetting range = setting(new DoubleSetting(
 		"range",
 		"client.setting.auto_web.range",
-		3.0,
+		4.0,
 		1.0,
 		6.0,
 		1.0
@@ -62,7 +62,7 @@ public final class AutoWebModule extends Module {
 	private final DoubleSetting rotationTicks = setting(new DoubleSetting(
 		"rotation_ticks",
 		"client.setting.auto_web.rotation_ticks",
-		2.0,
+		4.7,
 		1.0,
 		20.0,
 		0.1
@@ -80,7 +80,7 @@ public final class AutoWebModule extends Module {
 	private final BooleanSetting checkInventory = setting(new BooleanSetting(
 		"check_inventory",
 		"client.setting.auto_web.check_inventory",
-		false
+		true
 	));
 	private final ChoiceSetting<InventoryMode> inventoryMode = setting(new ChoiceSetting<>(
 		"inventory_mode",
@@ -105,7 +105,7 @@ public final class AutoWebModule extends Module {
 	private final DoubleSetting placementInterval = setting(new DoubleSetting(
 		"placement_interval",
 		"client.setting.auto_web.placement_interval",
-		1.0,
+		1.7,
 		0.1,
 		20.0,
 		0.1

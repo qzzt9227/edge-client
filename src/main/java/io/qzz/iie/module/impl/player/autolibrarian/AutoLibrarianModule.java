@@ -47,7 +47,7 @@ public final class AutoLibrarianModule extends Module {
 	));
 	private final BooleanSetting autoRecycle = setting(booleanSetting(
 		"auto_recycle",
-		false
+		true
 	));
 	private final DoubleSetting recycleRadius = setting(number(
 		"recycle_radius",

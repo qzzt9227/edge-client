@@ -1,31 +1,32 @@
 package io.qzz.iie.module.impl.render.droppoint;
 
+import io.qzz.iie.setting.ColorSetting;
 import io.qzz.iie.setting.DoubleSetting;
+import io.qzz.iie.setting.Setting;
 
 import java.util.Objects;
 import java.util.function.Function;
 
-/** Four slider-backed settings that expose one independently translucent RGBA color. */
+/** 包含 ColorSetting 与 opacity DoubleSetting 的独立半透明颜色设置组合。 */
 public final class DropPointColorSettings {
-	private final DoubleSetting red;
-	private final DoubleSetting green;
-	private final DoubleSetting blue;
+	private final ColorSetting color;
 	private final DoubleSetting opacity;
 
 	public DropPointColorSettings(
-		Function<DoubleSetting, DoubleSetting> register,
+		Function<Setting<?>, Setting<?>> register,
 		String idPrefix,
-		double defaultRed,
-		double defaultGreen,
-		double defaultBlue,
+		int defaultRgb,
 		double defaultOpacity
 	) {
 		Objects.requireNonNull(register, "register");
 		Objects.requireNonNull(idPrefix, "idPrefix");
-		red = register.apply(channel(idPrefix + "_red", idPrefix + ".red", defaultRed));
-		green = register.apply(channel(idPrefix + "_green", idPrefix + ".green", defaultGreen));
-		blue = register.apply(channel(idPrefix + "_blue", idPrefix + ".blue", defaultBlue));
-		opacity = register.apply(new DoubleSetting(
+		color = (ColorSetting) register.apply(new ColorSetting(
+			idPrefix + "_color",
+			"client.setting.drop_point." + idPrefix + ".color",
+			defaultRgb,
+			false
+		));
+		opacity = (DoubleSetting) register.apply(new DoubleSetting(
 			idPrefix + "_opacity",
 			"client.setting.drop_point." + idPrefix + ".opacity",
 			defaultOpacity,
@@ -36,33 +37,19 @@ public final class DropPointColorSettings {
 	}
 
 	public DropPointColor color() {
-		return new DropPointColor(red.value(), green.value(), blue.value(), opacity.value());
+		return new DropPointColor(
+			color.red() / 255.0,
+			color.green() / 255.0,
+			color.blue() / 255.0,
+			opacity.value()
+		);
 	}
 
-	public DoubleSetting red() {
-		return red;
-	}
-
-	public DoubleSetting green() {
-		return green;
-	}
-
-	public DoubleSetting blue() {
-		return blue;
+	public ColorSetting colorSetting() {
+		return color;
 	}
 
 	public DoubleSetting opacity() {
 		return opacity;
-	}
-
-	private static DoubleSetting channel(String id, String suffix, double defaultValue) {
-		return new DoubleSetting(
-			id,
-			"client.setting.drop_point." + suffix,
-			defaultValue,
-			0.0,
-			1.0,
-			0.05
-		);
 	}
 }

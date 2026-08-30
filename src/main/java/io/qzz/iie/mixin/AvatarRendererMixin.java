@@ -1,6 +1,7 @@
 package io.qzz.iie.mixin;
 
 import io.qzz.iie.module.impl.player.autoignite.AutoIgniteVisualState;
+import io.qzz.iie.module.impl.player.packetmine.PacketMineVisualState;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
@@ -24,7 +25,7 @@ abstract class AvatarRendererMixin {
 		method = "extractRenderState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V",
 		at = @At("TAIL")
 	)
-	private void edgeClient$applyAutoIgnitePreview(
+	private void edgeClient$applySilentRotationPreview(
 		Avatar avatar,
 		AvatarRenderState state,
 		float partialTick,
@@ -33,12 +34,18 @@ abstract class AvatarRendererMixin {
 		if (avatar != Minecraft.getInstance().player) {
 			return;
 		}
-		AutoIgniteVisualState.Snapshot preview = AutoIgniteVisualState.snapshot();
-		if (!preview.active()) {
+		AutoIgniteVisualState.Snapshot ignitePreview = AutoIgniteVisualState.snapshot();
+		if (ignitePreview.active()) {
+			state.bodyRot = ignitePreview.yaw();
+			state.yRot = 0.0F;
+			state.xRot = ignitePreview.pitch();
 			return;
 		}
-		state.bodyRot = preview.yaw();
-		state.yRot = 0.0F;
-		state.xRot = preview.pitch();
+		PacketMineVisualState.Snapshot minePreview = PacketMineVisualState.snapshot();
+		if (minePreview.rotationActive()) {
+			state.bodyRot = minePreview.yaw();
+			state.yRot = 0.0F;
+			state.xRot = minePreview.pitch();
+		}
 	}
 }

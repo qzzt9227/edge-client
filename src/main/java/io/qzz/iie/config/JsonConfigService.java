@@ -12,6 +12,8 @@ import io.qzz.iie.module.Module;
 import io.qzz.iie.module.ModuleManager;
 import io.qzz.iie.setting.BooleanSetting;
 import io.qzz.iie.setting.ChoiceSetting;
+import io.qzz.iie.setting.ColorSetting;
+import io.qzz.iie.setting.DoubleRangeSetting;
 import io.qzz.iie.setting.DoubleSetting;
 import io.qzz.iie.setting.KeybindSetting;
 import io.qzz.iie.setting.JsonSetting;
@@ -219,6 +221,20 @@ public final class JsonConfigService {
 			positionSetting.set(new HudPosition(positionX, positionY));
 			return;
 		}
+		if (setting instanceof DoubleRangeSetting rangeSetting) {
+			if (value.isJsonObject()) {
+				JsonObject obj = value.getAsJsonObject();
+				double min = obj.has("min") && obj.get("min").isJsonPrimitive() && obj.get("min").getAsJsonPrimitive().isNumber()
+					? obj.get("min").getAsDouble() : rangeSetting.rangeMinimum();
+				double max = obj.has("max") && obj.get("max").isJsonPrimitive() && obj.get("max").getAsJsonPrimitive().isNumber()
+					? obj.get("max").getAsDouble() : rangeSetting.rangeMaximum();
+				rangeSetting.setRange(min, max);
+			} else if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
+				double num = value.getAsDouble();
+				rangeSetting.setRange(num, num);
+			}
+			return;
+		}
 		if (!value.isJsonPrimitive()) {
 			return;
 		}
@@ -235,6 +251,12 @@ public final class JsonConfigService {
 		} else if (setting instanceof ChoiceSetting<?> choiceSetting
 			&& value.getAsJsonPrimitive().isString()) {
 			choiceSetting.selectOptionId(value.getAsString());
+		} else if (setting instanceof ColorSetting colorSetting) {
+			if (value.getAsJsonPrimitive().isString()) {
+				colorSetting.setHex(value.getAsString());
+			} else if (value.getAsJsonPrimitive().isNumber()) {
+				colorSetting.set(value.getAsInt());
+			}
 		} else if (setting instanceof KeybindSetting keybindSetting
 			&& value.getAsJsonPrimitive().isNumber()) {
 			int keyCode = value.getAsInt();
@@ -294,8 +316,15 @@ public final class JsonConfigService {
 			destination.addProperty(setting.id(), booleanSetting.value());
 		} else if (setting instanceof DoubleSetting doubleSetting) {
 			destination.addProperty(setting.id(), doubleSetting.value());
+		} else if (setting instanceof DoubleRangeSetting rangeSetting) {
+			JsonObject rangeObj = new JsonObject();
+			rangeObj.addProperty("min", rangeSetting.minimum());
+			rangeObj.addProperty("max", rangeSetting.maximum());
+			destination.add(setting.id(), rangeObj);
 		} else if (setting instanceof ChoiceSetting<?> choiceSetting) {
 			destination.addProperty(setting.id(), choiceSetting.selectedOption().id());
+		} else if (setting instanceof ColorSetting colorSetting) {
+			destination.addProperty(setting.id(), colorSetting.hex());
 		} else if (setting instanceof KeybindSetting keybindSetting) {
 			destination.addProperty(setting.id(), keybindSetting.value().keyCode());
 		} else if (setting instanceof HudPositionSetting positionSetting) {

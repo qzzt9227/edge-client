@@ -9,6 +9,7 @@ import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.setting.BooleanSetting;
 import io.qzz.iie.setting.ChoiceOption;
 import io.qzz.iie.setting.ChoiceSetting;
+import io.qzz.iie.setting.ColorSetting;
 import io.qzz.iie.setting.DoubleSetting;
 import io.qzz.iie.setting.KeybindSetting;
 import io.qzz.iie.setting.KeybindValue;
@@ -27,7 +28,7 @@ public final class ClickGuiModule extends Module {
 	private final ChoiceSetting<String> language = setting(new ChoiceSetting<>(
 		"language",
 		"client.setting.click_gui.language",
-		ClientI18n.LANG_AUTO,
+		ClientI18n.LANG_ZH_CN,
 		List.of(
 			new ChoiceOption<>("auto", "client.option.click_gui.language.auto", ClientI18n.LANG_AUTO),
 			new ChoiceOption<>("zh_cn", "client.option.click_gui.language.zh_cn", ClientI18n.LANG_ZH_CN),
@@ -56,7 +57,7 @@ public final class ClickGuiModule extends Module {
 	private final HudPositionSetting armorHudPosition = setting(new HudPositionSetting(
 		"armor_hud_position",
 		"client.setting.click_gui.armor_hud_position",
-		new HudPosition(0.02, 0.70)
+		new HudPosition(0.6529017857142857, 1.0)
 	));
 
 	private final BooleanSetting potionHudEnabled = setting(new BooleanSetting(
@@ -68,7 +69,7 @@ public final class ClickGuiModule extends Module {
 	private final HudPositionSetting potionHudPosition = setting(new HudPositionSetting(
 		"potion_hud_position",
 		"client.setting.click_gui.potion_hud_position",
-		new HudPosition(0.98, 0.05)
+		new HudPosition(0.32155172413793104, 1.0)
 	));
 
 	private final BooleanSetting arrayListEnabled = setting(new BooleanSetting(
@@ -80,7 +81,31 @@ public final class ClickGuiModule extends Module {
 	private final HudPositionSetting arrayListPosition = setting(new HudPositionSetting(
 		"array_list_position",
 		"client.setting.click_gui.array_list_position",
-		new HudPosition(0.98, 0.40)
+		new HudPosition(0.0, 0.4772570449323752)
+	));
+
+	private final BooleanSetting cpsHudEnabled = setting(new BooleanSetting(
+		"cps_hud_enabled",
+		"client.setting.click_gui.cps_hud_enabled",
+		true
+	));
+
+	private final HudPositionSetting cpsHudPosition = setting(new HudPositionSetting(
+		"cps_hud_position",
+		"client.setting.click_gui.cps_hud_position",
+		new HudPosition(0.0, 0.35)
+	));
+
+	private final BooleanSetting versionHudEnabled = setting(new BooleanSetting(
+		"version_hud_enabled",
+		"client.setting.click_gui.version_hud_enabled",
+		true
+	));
+
+	private final HudPositionSetting versionHudPosition = setting(new HudPositionSetting(
+		"version_hud_position",
+		"client.setting.click_gui.version_hud_position",
+		new HudPosition(0.0, 0.0)
 	));
 
 	private final KeybindSetting openShortcut = setting(new KeybindSetting(
@@ -92,7 +117,7 @@ public final class ClickGuiModule extends Module {
 	private final DoubleSetting guiTextScale = setting(new DoubleSetting(
 		"gui_text_scale",
 		"client.setting.click_gui.gui_text_scale",
-		1.0,
+		1.3,
 		0.75,
 		1.5,
 		0.05
@@ -119,7 +144,7 @@ public final class ClickGuiModule extends Module {
 	private final DoubleSetting messageOpacity = setting(new DoubleSetting(
 		"message_opacity",
 		"client.setting.click_gui.message_opacity",
-		0.85,
+		0.8,
 		0.1,
 		1.0,
 		0.05
@@ -128,7 +153,7 @@ public final class ClickGuiModule extends Module {
 	private final ChoiceSetting<String> messageFont = setting(new ChoiceSetting<>(
 		"message_font",
 		"client.setting.click_gui.message_font",
-		"minecraft:default",
+		"minecraft:uniform",
 		List.of(
 			fontOption("default", "minecraft:default"),
 			fontOption("uniform", "minecraft:uniform"),
@@ -136,21 +161,12 @@ public final class ClickGuiModule extends Module {
 		)
 	));
 
-	private final DoubleSetting messageFontRed = colorChannel(
-		"message_font_red",
-		"client.setting.click_gui.message_font_red",
-		228.0
-	);
-	private final DoubleSetting messageFontGreen = colorChannel(
-		"message_font_green",
-		"client.setting.click_gui.message_font_green",
-		232.0
-	);
-	private final DoubleSetting messageFontBlue = colorChannel(
-		"message_font_blue",
-		"client.setting.click_gui.message_font_blue",
-		237.0
-	);
+	private final ColorSetting messageTextColor = setting(new ColorSetting(
+		"message_text_color",
+		"client.setting.click_gui.message_text_color",
+		0xDEE8ED,
+		false
+	));
 
 	public ClickGuiModule() {
 		super(new ModuleMetadata(
@@ -204,6 +220,22 @@ public final class ClickGuiModule extends Module {
 		return arrayListPosition;
 	}
 
+	public BooleanSetting cpsHudEnabled() {
+		return cpsHudEnabled;
+	}
+
+	public HudPositionSetting cpsHudPosition() {
+		return cpsHudPosition;
+	}
+
+	public BooleanSetting versionHudEnabled() {
+		return versionHudEnabled;
+	}
+
+	public HudPositionSetting versionHudPosition() {
+		return versionHudPosition;
+	}
+
 	public DoubleSetting guiTextScale() {
 		return guiTextScale;
 	}
@@ -228,27 +260,12 @@ public final class ClickGuiModule extends Module {
 		return messageFont;
 	}
 
-	public DoubleSetting messageFontRed() {
-		return messageFontRed;
-	}
-
-	public DoubleSetting messageFontGreen() {
-		return messageFontGreen;
-	}
-
-	public DoubleSetting messageFontBlue() {
-		return messageFontBlue;
+	public ColorSetting messageTextColorSetting() {
+		return messageTextColor;
 	}
 
 	public int messageTextColor() {
-		int red = (int) Math.round(messageFontRed.value());
-		int green = (int) Math.round(messageFontGreen.value());
-		int blue = (int) Math.round(messageFontBlue.value());
-		return 0xFF000000 | red << 16 | green << 8 | blue;
-	}
-
-	private DoubleSetting colorChannel(String id, String translationKey, double defaultValue) {
-		return setting(new DoubleSetting(id, translationKey, defaultValue, 0.0, 255.0, 1.0));
+		return 0xFF000000 | messageTextColor.rgb();
 	}
 
 	private static ChoiceOption<String> fontOption(String id, String resourceId) {

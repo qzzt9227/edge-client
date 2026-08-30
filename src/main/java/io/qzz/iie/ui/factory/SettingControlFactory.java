@@ -5,12 +5,16 @@ import io.qzz.iie.module.ModuleId;
 import io.qzz.iie.module.ModuleManager;
 import io.qzz.iie.setting.BooleanSetting;
 import io.qzz.iie.setting.ChoiceSetting;
+import io.qzz.iie.setting.ColorSetting;
+import io.qzz.iie.setting.DoubleRangeSetting;
 import io.qzz.iie.setting.DoubleSetting;
 import io.qzz.iie.setting.EditorSetting;
 import io.qzz.iie.setting.KeybindSetting;
 import io.qzz.iie.setting.Setting;
 import io.qzz.iie.ui.binding.ModuleEnabledBinding;
+import io.qzz.iie.ui.component.control.ColorPickerControl;
 import io.qzz.iie.ui.component.control.SliderControl;
+import io.qzz.iie.ui.component.control.RangeSliderControl;
 import io.qzz.iie.ui.component.control.ChoiceControl;
 import io.qzz.iie.ui.component.control.KeybindControl;
 import io.qzz.iie.ui.component.control.HudPositionControl;
@@ -69,8 +73,14 @@ public final class SettingControlFactory {
 		if (setting instanceof DoubleSetting doubleSetting) {
 			return new SliderControl(doubleSetting);
 		}
+		if (setting instanceof DoubleRangeSetting rangeSetting) {
+			return new RangeSliderControl(rangeSetting);
+		}
 		if (setting instanceof ChoiceSetting<?> choiceSetting) {
 			return new ChoiceControl(choiceSetting);
+		}
+		if (setting instanceof ColorSetting colorSetting) {
+			return new ColorPickerControl(colorSetting);
 		}
 		if (setting instanceof KeybindSetting keybindSetting) {
 			return new KeybindControl(keybindSetting);

@@ -62,6 +62,7 @@ Unix：
 6. Minecraft/Fabric 类型限制在入口、事件、屏幕和适配层，不向纯领域逻辑扩散。
 7. API 从最小可用接口开始；没有第二个真实用例时，不提前设计插件系统或通用框架。
 8. 所有游戏状态、输入和 GUI 更新默认发生在客户端线程。
+9. 使用中文写注释
 
 依赖方向：
 
@@ -159,6 +160,8 @@ moduleManager.setEnabled(module.id(), false);
 - 每帧逻辑不得分配大量临时对象、执行阻塞 I/O 或保存配置。
 - `ModuleManager` 保持确定性注册顺序，并拒绝重复模块 ID。
 - 不用类名、显示文本或列表下标作为配置键。
+- 每次添加新功能模块都默认不绑定快捷键（声明 `keybind(new KeybindSetting("keybind", "client.setting.module_keybind"))` 时使用默认未绑定状态，不得硬编码默认按键），由用户在界面中自行按需绑定，避免键位冲突。
+- 所有模块由基类 `Module` 内置声明 `BooleanSetting notification`（设置 ID 为 `"notification"`，翻译键 `"client.setting.module_notification"`，默认 `true`）。当该设置为 `true` 时，模块每次激活或关闭都会触发消息提示框通知；当设置为 `false` 时，该模块的激活和关闭静默执行，不弹出任何消息提示。
 
 模块作者的正常用法是声明设置，而不是创建 GUI：
 
@@ -287,7 +290,7 @@ private final KeybindSetting shortcut = keybind(
 - `ChoiceOption.id()` 是配置兼容所需的稳定 ID；不得使用显示文本或列表下标代替。
 - `ChoiceSetting` 始终只保存一个已声明选项的值，左键展开抽屉并选择；只有抽屉选项边界内的鼠标悬停才显示选项高亮，移出边界必须立即清除。
 - 每个模块最多调用一次 `keybind(...)`；不声明则不参与模块快捷键调度。
-- 快捷键默认未绑定；监听时普通键确认、Esc 取消并保留原值、Backspace 清除。
+- 每次添加新模块都默认不绑定快捷键（使用默认构造 `new KeybindSetting("keybind", ...)` 即为未绑定状态）；监听时普通键确认、Esc 取消并保留原值、Backspace 清除。
 - 模块快捷键只在 `client.gui.screen() == null` 的正常游戏画面按下沿触发；长按不重复，GUI 内按住后关闭也不误触发。
 - 动态模块快捷键由一个 `ModuleShortcutDispatcher` 统一轮询；模块不得注册自己的全局按键监听。
 - 非模块切换动作使用普通 `KeybindSetting` 与 `KeybindActionDispatcher` 复用相同的按下沿和屏幕抑制语义；Click GUI 的 `open_shortcut` 默认右 Shift，并由通用 JSON 配置持久化。

@@ -9,6 +9,7 @@ public abstract class Setting<T> {
 	private final String translationKey;
 	private final T defaultValue;
 	private final List<Runnable> changeListeners = new ArrayList<>();
+	private java.util.function.BooleanSupplier visiblePredicate = () -> true;
 	private T value;
 
 	protected Setting(String id, String translationKey, T defaultValue) {
@@ -56,6 +57,16 @@ public abstract class Setting<T> {
 		Runnable checked = Objects.requireNonNull(listener, "listener");
 		changeListeners.add(checked);
 		return () -> changeListeners.remove(checked);
+	}
+
+	@SuppressWarnings("unchecked")
+	public final <S extends Setting<T>> S visibleWhen(java.util.function.BooleanSupplier condition) {
+		this.visiblePredicate = Objects.requireNonNull(condition, "condition");
+		return (S) this;
+	}
+
+	public final boolean isVisible() {
+		return visiblePredicate.getAsBoolean();
 	}
 
 	protected abstract T normalize(T requestedValue);

@@ -39,6 +39,7 @@ replay_*.log
 *.hprof
 *.jfr
 *.log
+*.zip
 
 # Local configuration and secrets
 .env

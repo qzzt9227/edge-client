@@ -16,13 +16,28 @@ import io.qzz.iie.module.ModuleManager;
 import io.qzz.iie.module.ModuleMetadata;
 import io.qzz.iie.module.ModuleShortcutDispatcher;
 import io.qzz.iie.module.impl.movement.autowalk.AutoWalkModule;
+import io.qzz.iie.module.impl.movement.flight.FlightHooks;
+import io.qzz.iie.module.impl.movement.flight.FlightModule;
+import io.qzz.iie.module.impl.movement.flight.FlightPolicy;
 import io.qzz.iie.module.impl.movement.safewalkplus.SafeWalkPlusModule;
 import io.qzz.iie.module.impl.movement.safewalkplus.SafeWalkPlusPolicy;
 import io.qzz.iie.module.impl.combat.autoweb.AutoWebModule;
+import io.qzz.iie.module.impl.combat.bedaura.BedAuraModule;
+import io.qzz.iie.module.impl.combat.autototem.AutoTotemModule;
+import io.qzz.iie.module.impl.combat.autototem.AutoTotemPolicy;
+import io.qzz.iie.module.impl.combat.autototem.AutoTotemTypes.OffhandMode;
+import io.qzz.iie.module.impl.render.norender.NoRenderHooks;
+import io.qzz.iie.module.impl.render.norender.NoRenderModule;
 import io.qzz.iie.module.impl.gui.clickgui.ClickGuiModule;
 import io.qzz.iie.module.impl.player.autolibrarian.EnchantmentTarget;
 import io.qzz.iie.module.impl.player.autolibrarian.EnchantmentTargetsSetting;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianLogicContract;
+import io.qzz.iie.module.impl.player.antiquit.AntiQuitHooks;
+import io.qzz.iie.module.impl.player.antiquit.AntiQuitModule;
+import io.qzz.iie.module.impl.player.copynbt.BlockNbtCategory;
+import io.qzz.iie.module.impl.player.copynbt.CopyNbtHooks;
+import io.qzz.iie.module.impl.player.copynbt.CopyNbtModule;
+import io.qzz.iie.module.impl.player.copynbt.CopyNbtPolicy;
 import io.qzz.iie.module.impl.player.autolibrarian.AutoLibrarianModule;
 import io.qzz.iie.module.impl.player.autoignite.AutoIgniteModule;
 import io.qzz.iie.module.impl.player.autoignite.AutoIgniteItemPolicy;
@@ -41,6 +56,10 @@ import io.qzz.iie.module.impl.input.specialflip.SpecialFlipModule;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarModule;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarPolicy;
 import io.qzz.iie.module.impl.render.betterhealth.BetterHealthBarHooks;
+import io.qzz.iie.module.impl.render.crystalanimation.CrystalAnimationHooks;
+import io.qzz.iie.module.impl.render.crystalanimation.CrystalAnimationMode;
+import io.qzz.iie.module.impl.render.crystalanimation.CrystalAnimationModule;
+import io.qzz.iie.module.impl.render.crystalanimation.CrystalAnimationPolicy;
 import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderMode;
 import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeHooks;
 import io.qzz.iie.module.impl.render.itemrendermode.ItemRenderModeModule;
@@ -54,6 +73,18 @@ import io.qzz.iie.module.impl.render.droppoint.DropPointRole;
 import io.qzz.iie.module.impl.render.droppoint.DropPointModule;
 import io.qzz.iie.module.impl.render.explosionwarning.ExplosionCountdown;
 import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningPlacement;
+import io.qzz.iie.module.impl.render.zoom.ZoomHooks;
+import io.qzz.iie.module.impl.render.zoom.ZoomModule;
+import io.qzz.iie.module.impl.render.freelook.FreeLookHooks;
+import io.qzz.iie.module.impl.render.freelook.FreeLookModule;
+import io.qzz.iie.module.impl.render.freelook.FreeLookPolicy;
+import io.qzz.iie.module.impl.player.packetmine.PacketMineBox;
+import io.qzz.iie.module.impl.player.packetmine.PacketMineModule;
+import io.qzz.iie.module.impl.player.packetmine.PacketMinePolicy;
+import io.qzz.iie.module.impl.player.packetmine.PacketMineRenderStyle;
+import io.qzz.iie.module.impl.player.packetmine.PacketMineVisualState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import io.qzz.iie.module.impl.render.explosionwarning.ExplosionTargetKind;
 import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningEvent;
 import io.qzz.iie.module.impl.render.explosionwarning.ExplosionWarningTracker;
@@ -71,10 +102,26 @@ import io.qzz.iie.module.impl.combat.autoweb.AutoWebTypes.TargetType;
 import io.qzz.iie.setting.BooleanSetting;
 import io.qzz.iie.setting.ChoiceOption;
 import io.qzz.iie.setting.ChoiceSetting;
+import io.qzz.iie.setting.ColorSetting;
+import io.qzz.iie.setting.DoubleRange;
+import io.qzz.iie.setting.DoubleRangeSetting;
 import io.qzz.iie.setting.DoubleSetting;
 import io.qzz.iie.setting.KeybindSetting;
 import io.qzz.iie.setting.KeybindActionDispatcher;
 import io.qzz.iie.setting.KeybindValue;
+import io.qzz.iie.ui.component.control.ColorPickerControl;
+import io.qzz.iie.ui.component.control.RangeSliderControl;
+import io.qzz.iie.ui.panel.DoubleRangeSettingItem;
+import io.qzz.iie.module.impl.player.airplace.AirPlaceDirection;
+import io.qzz.iie.module.impl.player.airplace.AirPlaceModule;
+import io.qzz.iie.module.impl.player.airplace.AirPlacePolicy;
+import io.qzz.iie.module.impl.combat.autoclicker.AutoClickerController;
+import io.qzz.iie.module.impl.combat.autoclicker.AutoClickerModule;
+import io.qzz.iie.ui.hud.CpsTracker;
+import io.qzz.iie.ui.hud.CpsHudRenderer;
+import io.qzz.iie.ui.hud.VersionHudRenderer;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.AABB;
 import io.qzz.iie.ui.animation.AnimatedDouble;
 import io.qzz.iie.ui.animation.AnimatedRect;
 import io.qzz.iie.ui.animation.AnimatedScroll;
@@ -108,8 +155,14 @@ import io.qzz.iie.ui.hud.HudPositionEditorVisibilityContract;
 
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerAbilitiesPacket;
+import net.minecraft.world.entity.player.Abilities;
 
+import io.qzz.iie.setting.Setting;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.time.Duration;
@@ -133,6 +186,13 @@ public final class LogicTestSuite {
 		specialFlipDeclaresDefaultsAndHooksFollowLifecycle();
 		betterHealthBarDeclaresDefaultsAndCapsExtraRows();
 		itemRenderModeDeclaresDefaultsAndHooksFollowLifecycle();
+		crystalAnimationDeclaresDefaultsAndHooksFollowLifecycle();
+		zoomModuleMetadataAndSettings();
+		zoomHooksCalculatesMultipliersAndFollowsLifecycle();
+		moduleNotificationControlsStateChangeMessages();
+		packetMineModuleMetadataAndSettings();
+		packetMinePolicyGeometryAndRotationCalculations();
+		settingVisibilityConditionsControlVisibility();
 		dropPointPolicyHonorsSpecialBlocksAndDistanceThreshold();
 		dropPointFootprintSelectsTheLargestCoveredBlock();
 		dropPointColorsClampToExplicitArgbChannels();
@@ -186,6 +246,25 @@ public final class LogicTestSuite {
 		toggleAnimationFollowsItsBinding();
 		animationClockUsesElapsedTimeAndClampsLongFrames();
 		animationRejectsNonFiniteInputsAndEasingOutputs();
+		bedAuraModuleMetadataAndSettings();
+		autoTotemPolicyFallDamageAndEquipDecisions();
+		autoTotemModuleMetadataAndSettings();
+		noRenderModuleMetadataAndHooksFollowLifecycle();
+		antiQuitModuleMetadataSettingsAndHooksFollowLifecycle();
+		flightModuleMetadataSettingsAndPolicyCalculations();
+		doubleRangeSettingNormalizationAndFractionMath();
+		rangeSliderControlPointerHandling();
+		doubleRangeConfigPersistence();
+		airPlaceModuleMetadataSettingsAndPolicy();
+		autoClickerModuleMetadataSettingsAndDualScheduling();
+		cpsTrackerAndHudRendererCalculations();
+		colorSettingHexParsingAndConversion();
+		colorPickerControlHsvMathAndPresets();
+		versionHudRendererMetadataAndMeasurements();
+		freeLookPolicyRotationAndInterpolation();
+		copyNbtPolicyDecisionsAndSizeLimits();
+		copyNbtModuleMetadataAndDefaults();
+		allRegisteredModulesAndSettingsHaveTranslations();
 		System.out.println("LogicTestSuite: all tests passed");
 	}
 
@@ -278,7 +357,7 @@ public final class LogicTestSuite {
 	private static void safeWalkPlusModuleMetadataAndDefaults() {
 		SafeWalkPlusModule module = new SafeWalkPlusModule();
 		check(module.category().id().equals("movement"), "safe walk plus must reside in movement category");
-		check(module.coverageThreshold().value() == 60.0, "coverage threshold must default to 60%");
+		check(module.coverageThreshold().value() == 45.0, "coverage threshold must default to 45%");
 		check(module.coverageThreshold().minimum() == 1.0, "coverage threshold minimum must be 1%");
 		check(module.coverageThreshold().maximum() == 100.0, "coverage threshold maximum must be 100%");
 		check(module.coverageThreshold().step() == 1.0, "coverage threshold step must be 1%");
@@ -348,11 +427,12 @@ public final class LogicTestSuite {
 
 	private static void dropPointModuleDeclaresIndependentColorOpacitySliders() {
 		DropPointModule module = new DropPointModule(MessageBoxApi.noop());
-		check(module.settings().size() == 21, "drop point must expose four channels for each of five colors plus hint count");
+		check(module.settings().size() == 12, "drop point must expose 5 color settings + 5 opacity sliders + hint count + notification");
 		check(module.scaffoldHintCount().value() == 2.0, "scaffold hint count must default to two");
 		check(module.scaffoldHintCount().minimum() == 1.0, "scaffold hint count minimum must be one");
 		check(module.scaffoldHintCount().maximum() == 8.0, "scaffold hint count maximum must be eight");
 		check(module.safeColor().opacity() == 0.4, "safe color opacity must be independently adjustable");
+		check(module.safeColor().argb() != 0, "safe color ARGB must be valid");
 	}
 
 	private static void explosionWarningCountdownUsesMillisecondPrecision() {
@@ -446,11 +526,11 @@ public final class LogicTestSuite {
 
 	private static void explosionWarningModuleDeclaresRecommendedDefaults() {
 		ExplosionWarningModule module = new ExplosionWarningModule(MessageBoxApi.noop());
-		check(module.radius().value() == 5.0, "explosion warning radius must default to five blocks");
+		check(module.radius().value() == 6.0, "explosion warning radius must default to six blocks");
 		check(module.radius().minimum() == 1.0 && module.radius().maximum() == 10.0,
 			"explosion warning radius must be constrained to one through ten blocks");
 		check(module.impendingMessage().value(), "impending explosion messages must default to enabled");
-		check(module.creeperRangeMessage().value(), "creeper range messages must default to enabled");
+		check(!module.creeperRangeMessage().value(), "creeper range messages must default to disabled");
 		check(module.messageColor() == 0xFFFF0000, "explosion warning message color must default to red");
 		check(module.countdownOffsetX().value() == 0.0, "countdown X offset must default to zero");
 		check(module.countdownOffsetY().value() == 0.0, "countdown Y offset must default to zero");
@@ -463,15 +543,15 @@ public final class LogicTestSuite {
 		AutoIgniteModule module = new AutoIgniteModule();
 		check(module.category().id().equals("player"), "auto ignite must appear in the player category");
 		check(module.itemSource().value() == ItemSource.HOTBAR, "direct hotbar access must be the default source");
-		check(module.itemPriority().value() == ItemPriority.FLINT_FIRST, "flint and steel must be preferred by default");
-		check(module.restoreAfterFlint().value(), "flint ignition must return to the previous TNT slot by default");
+		check(module.itemPriority().value() == ItemPriority.FIRE_CHARGE_FIRST, "fire charge must be preferred by default");
+		check(!module.restoreAfterFlint().value(), "flint ignition restore must default to disabled");
 		check(!module.cameraFollows().value(), "client camera following must default to disabled");
-		check(module.rotationTicks().value() == 1.0, "rotation and restoration must default to one tick each");
+		check(module.rotationTicks().value() == 3.0, "rotation must default to 3 ticks");
 		check(module.rotationTicks().minimum() == 1.0 && module.rotationTicks().maximum() == 10.0,
 			"rotation time must be constrained to one through ten ticks");
 		check(module.targetHandling().value() == TargetHandling.LATEST_ONLY,
 			"new TNT placements must replace unfinished targets by default");
-		check(!module.strictInteraction().value(), "strict reach and visibility checks must default to disabled");
+		check(module.strictInteraction().value(), "strict reach and visibility checks must default to enabled");
 		check(!module.keybind().orElseThrow().value().isBound(), "auto ignite shortcut must default to unbound");
 	}
 
@@ -695,25 +775,29 @@ public final class LogicTestSuite {
 			"ClickGUI appearance derives from its gui package"
 		);
 		check(!module.metadata().toggleable(), "appearance-only module must not expose a fake toggle");
-		check(module.settings().size() == 18, "all requested Click GUI values must be GUI settings");
-		check(module.language().value().equals("auto"), "language defaults to auto");
+		check(module.settings().size() == 21, "all requested Click GUI values must be GUI settings");
+		check(module.language().value().equals("zh_cn"), "language defaults to zh_cn");
 		check(module.customFont().value().equals("default"), "customFont defaults to default");
 		check(module.armorHudEnabled().value(), "armor HUD enabled defaults to true");
 		check(module.potionHudEnabled().value(), "potion HUD enabled defaults to true");
 		check(module.arrayListEnabled().value(), "arrayList HUD enabled defaults to true");
+		check(module.cpsHudEnabled().value(), "cps HUD enabled defaults to true");
+		check(module.versionHudEnabled().value(), "version HUD enabled defaults to true");
+		check(module.versionHudPosition().value() != null, "version HUD position must not be null");
 		check(
 			module.openShortcut().value().keyCode() == 344,
 			"Click GUI shortcut must default to right Shift"
 		);
-		check(module.guiTextScale().value() == 1.0, "Click GUI text scale defaults to 100%");
+		check(module.guiTextScale().value() == 1.3, "Click GUI text scale defaults to 130%");
 		check(module.messageBoxScale().value() == 1.0, "message box scale defaults to 100%");
 		check(module.messageTextScale().value() == 1.0, "message text scale defaults to 100%");
-		check(module.messageOpacity().value() == 0.85, "message box opacity defaults to 85%");
+		check(module.messageOpacity().value() == 0.8, "message box opacity defaults to 80%");
 		check(
-			module.messageFont().value().equals("minecraft:default"),
-			"message font defaults to Minecraft default"
+			module.messageFont().value().equals("minecraft:uniform"),
+			"message font defaults to uniform"
 		);
-		check(module.messageTextColor() == 0xFFE4E8ED, "message text color defaults to theme text");
+		check(module.messageTextColor() == 0xFFDEE8ED, "message text color defaults to theme text");
+		check(module.messageTextColorSetting().rgb() == 0xDEE8ED, "message text color setting defaults to 0xDEE8ED");
 
 		ModuleManager manager = new ModuleManager();
 		manager.register(module);
@@ -953,16 +1037,66 @@ public final class LogicTestSuite {
 
 		BuiltInModules.register(manager);
 
-		check(manager.modules().size() == 14, "only production built-ins must be registered in the GUI");
+		check(manager.modules().size() == 26, "only production built-ins must be registered in the GUI");
+		Module copyNbt = manager.find(ModuleId.of("client", "copy_nbt")).orElseThrow();
+		check(
+			copyNbt.category().id().equals("player"),
+			"copy nbt derives from its player package"
+		);
 		Module fullbright = manager.find(ModuleId.of("client", "fullbright")).orElseThrow();
 		check(
 			fullbright.category().id().equals("render"),
 			"fullbright derives from its render package"
 		);
+		Module freeLook = manager.find(ModuleId.of("client", "free_look")).orElseThrow();
+		check(
+			freeLook.category().id().equals("render"),
+			"free look derives from its render package"
+		);
+		Module noRender = manager.find(ModuleId.of("client", "no_render")).orElseThrow();
+		check(
+			noRender.category().id().equals("render"),
+			"no render derives from its render package"
+		);
+		Module zoom = manager.find(ModuleId.of("client", "zoom")).orElseThrow();
+		check(
+			zoom.category().id().equals("render"),
+			"zoom derives from its render package"
+		);
+		Module crystalAnimation = manager.find(ModuleId.of("client", "crystal_animation")).orElseThrow();
+		check(
+			crystalAnimation.category().id().equals("render"),
+			"crystal animation derives from its render package"
+		);
+		Module packetMine = manager.find(ModuleId.of("client", "packet_mine")).orElseThrow();
+		check(
+			packetMine.category().id().equals("player"),
+			"packet mine derives from its player package"
+		);
 		Module autoWeb = manager.find(ModuleId.of("client", "auto_web")).orElseThrow();
 		check(
 			autoWeb.category().id().equals("combat"),
 			"auto web derives from its combat package"
+		);
+		Module autoClicker = manager.find(ModuleId.of("client", "auto_clicker")).orElseThrow();
+		check(
+			autoClicker.category().id().equals("combat"),
+			"auto clicker derives from its combat package"
+		);
+		Module airPlace = manager.find(ModuleId.of("client", "air_place")).orElseThrow();
+		check(
+			airPlace.category().id().equals("player"),
+			"air place derives from its player package"
+		);
+		Module bedAura = manager.find(ModuleId.of("client", "bed_aura")).orElseThrow();
+		check(
+			bedAura.category().id().equals("combat"),
+			"bed aura derives from its combat package"
+		);
+		Module autoTotem = manager.find(ModuleId.of("client", "auto_totem")).orElseThrow();
+		check(
+			autoTotem.category().id().equals("combat"),
+			"auto totem derives from its combat package"
 		);
 		Module autoWalk = manager.find(ModuleId.of("client", "auto_walk")).orElseThrow();
 		check(
@@ -1014,6 +1148,15 @@ public final class LogicTestSuite {
 			manager.find(ModuleId.of("client", "auto_ignite")).isPresent(),
 			"auto ignite must be registered in the GUI"
 		);
+		check(
+			manager.find(ModuleId.of("client", "anti_quit")).isPresent(),
+			"anti quit must be registered in the GUI"
+		);
+		Module flight = manager.find(ModuleId.of("client", "flight")).orElseThrow();
+		check(
+			flight.category().id().equals("movement"),
+			"flight derives from its movement package"
+		);
 	}
 
 	private static void autoWalkModuleMetadataAndLifecycle() {
@@ -1023,7 +1166,7 @@ public final class LogicTestSuite {
 			"auto walk derives from its movement package"
 		);
 		check(module.metadata().toggleable(), "auto walk must expose a real toggle");
-		check(module.settings().size() == 1, "auto walk must declare only its shortcut");
+		check(module.settings().size() == 2, "auto walk must declare its shortcut and notification");
 		check(
 			!module.keybind().orElseThrow().value().isBound(),
 			"auto walk shortcut must default unbound"
@@ -1037,7 +1180,7 @@ public final class LogicTestSuite {
 			"invert mouse derives from its input package"
 		);
 		check(horizontal.metadata().toggleable(), "invert mouse must expose a real toggle");
-		check(horizontal.settings().size() == 1, "invert mouse must declare only its shortcut");
+		check(horizontal.settings().size() == 2, "invert mouse must declare its shortcut and notification");
 		check(
 			!horizontal.keybind().orElseThrow().value().isBound(),
 			"invert mouse shortcut must default unbound"
@@ -1053,8 +1196,8 @@ public final class LogicTestSuite {
 			"invert mouse pitch must expose a real toggle"
 		);
 		check(
-			vertical.settings().size() == 1,
-			"invert mouse pitch must declare only its shortcut"
+			vertical.settings().size() == 2,
+			"invert mouse pitch must declare its shortcut and notification"
 		);
 		check(
 			!vertical.keybind().orElseThrow().value().isBound(),
@@ -1125,8 +1268,8 @@ public final class LogicTestSuite {
 			"special flip must expose a real toggle"
 		);
 		check(
-			module.settings().size() == 1,
-			"special flip must declare only its shortcut"
+			module.settings().size() == 2,
+			"special flip must declare its shortcut and notification"
 		);
 		check(
 			!module.keybind().orElseThrow().value().isBound(),
@@ -1164,18 +1307,18 @@ public final class LogicTestSuite {
 			module.category().id().equals("player"),
 			"auto librarian derives from its player package"
 		);
-		check(module.targets().value().size() == 1, "one historical target must be declared");
+		check(module.targets().value().size() == 5, "five targets must be declared by default");
 		check(
 			module.targets().value().getFirst().equals(
-				new EnchantmentTarget("minecraft:unbreaking", 3, false, 1, 64)
+				new EnchantmentTarget("minecraft:unbreaking", 3, false, 4, 64)
 			),
-			"historical unbreaking III target must be the default"
+			"unbreaking III target must be the first default"
 		);
 		check(module.searchRadius().value() == 3.0, "search radius must default to 3");
 		check(module.placementRadius().value() == 2.0, "placement radius must default to 2");
 		check(module.allowHandMining().value(), "hand mining must default on");
 		check(module.reportTrades().value(), "trade reporting must default on");
-		check(!module.autoRecycle().value(), "automatic lectern recovery must default off");
+		check(module.autoRecycle().value(), "automatic lectern recovery must default on");
 		check(module.rotationTicks().value() == 6.0, "rotation must default to 6 ticks");
 		check(!module.keybind().orElseThrow().value().isBound(), "shortcut must be unbound");
 	}
@@ -1187,9 +1330,9 @@ public final class LogicTestSuite {
 			module.category().id().equals("render"),
 			"better health bar derives from its render package"
 		);
-		check(module.thresholdRows().value() == 2, "health threshold must default to two rows");
-		check(module.numberScale().value() == 1.0, "health number size must default to 100%");
-		check(module.settings().size() == 3, "module must expose threshold, position and size");
+		check(module.thresholdRows().value() == 1, "health threshold must default to one row");
+		check(module.numberScale().value() == 1.2, "health number size must default to 120%");
+		check(module.settings().size() == 4, "module must expose threshold, position, size and notification");
 
 		check(
 			!BetterHealthBarPolicy.shouldShowNumber(true, 2, 40.0F),
@@ -1226,7 +1369,7 @@ public final class LogicTestSuite {
 		);
 		manager.setEnabled(module.id(), true);
 		check(
-			closeTo(BetterHealthBarHooks.clampMaximumHealth(60.0F), 40.0),
+			closeTo(BetterHealthBarHooks.clampMaximumHealth(60.0F), 20.0),
 			"enabled module hook must apply the configured row cap"
 		);
 	}
@@ -1243,7 +1386,7 @@ public final class LogicTestSuite {
 			module.renderModeSetting().value() == ItemRenderMode.BILLBOARD,
 			"2D billboard must be the default mode"
 		);
-		check(module.settings().size() == 2, "module must declare mode and shortcut");
+		check(module.settings().size() == 3, "module must declare mode, shortcut and notification");
 		check(
 			!module.keybind().orElseThrow().value().isBound(),
 			"item render mode shortcut must default unbound"
@@ -1319,17 +1462,464 @@ public final class LogicTestSuite {
 		);
 	}
 
+	private static void crystalAnimationDeclaresDefaultsAndHooksFollowLifecycle() {
+		CrystalAnimationModule module = new CrystalAnimationModule();
+
+		check(
+			module.category().id().equals("render"),
+			"crystal animation derives from its render package"
+		);
+		check(module.metadata().toggleable(), "crystal animation must expose a toggle");
+		check(
+			module.modeSetting().value() == CrystalAnimationMode.SPIN,
+			"spin mode must be the default"
+		);
+		check(
+			module.speedSetting().defaultValue() == 5.2,
+			"speed setting must default to 5.2x"
+		);
+		check(
+			module.speedSetting().minimum() == 0.0 && module.speedSetting().maximum() == 10.0,
+			"speed setting range must be 0.0 to 10.0"
+		);
+		check(
+			module.speedSetting().step() == 0.1,
+			"speed setting step must be 0.1"
+		);
+		check(module.settings().size() == 8, "module must declare mode, speed, offsets, scale, shortcut, and notification");
+		check(
+			module.offsetXSetting().defaultValue() == 0.0
+				&& module.offsetXSetting().minimum() == -5.0
+				&& module.offsetXSetting().maximum() == 5.0
+				&& module.offsetXSetting().step() == 0.1,
+			"offsetX range must be -5.0 to 5.0 with step 0.1"
+		);
+		check(
+			module.offsetYSetting().defaultValue() == 0.0
+				&& module.offsetYSetting().minimum() == -5.0
+				&& module.offsetYSetting().maximum() == 5.0
+				&& module.offsetYSetting().step() == 0.1,
+			"offsetY range must be -5.0 to 5.0 with step 0.1"
+		);
+		check(
+			module.offsetZSetting().defaultValue() == 0.0
+				&& module.offsetZSetting().minimum() == -5.0
+				&& module.offsetZSetting().maximum() == 5.0
+				&& module.offsetZSetting().step() == 0.1,
+			"offsetZ range must be -5.0 to 5.0 with step 0.1"
+		);
+		check(
+			module.scaleSetting().defaultValue() == 1.1
+				&& module.scaleSetting().minimum() == 0.1
+				&& module.scaleSetting().maximum() == 5.0
+				&& module.scaleSetting().step() == 0.1,
+			"scale range must be 0.1 to 5.0 with step 0.1"
+		);
+		check(
+			!module.keybind().orElseThrow().value().isBound(),
+			"crystal animation shortcut must default unbound"
+		);
+
+		// Visibility condition check
+		check(
+			module.speedSetting().isVisible(),
+			"speed setting must be visible when mode is spin"
+		);
+		module.modeSetting().set(CrystalAnimationMode.STATIC);
+		check(
+			!module.speedSetting().isVisible(),
+			"speed setting must be hidden when mode is static"
+		);
+		module.modeSetting().set(CrystalAnimationMode.SPIN);
+		check(
+			module.speedSetting().isVisible(),
+			"speed setting must be visible when mode is spin"
+		);
+		module.modeSetting().set(CrystalAnimationMode.STATIC);
+		check(
+			!module.speedSetting().isVisible(),
+			"speed setting must collapse again when switching back to static"
+		);
+
+		// Hook & Policy lifecycle checks
+		check(
+			!CrystalAnimationHooks.isEnabled(),
+			"uninstalled hooks must stay disabled"
+		);
+		check(
+			CrystalAnimationHooks.mode() == null,
+			"uninstalled hooks must return null mode"
+		);
+
+		CrystalAnimationHooks.install(module);
+		check(
+			!CrystalAnimationHooks.isEnabled(),
+			"disabled module must keep hooks disabled"
+		);
+
+		ModuleManager manager = new ModuleManager();
+		manager.register(module);
+		manager.setEnabled(module.id(), true);
+
+		check(
+			CrystalAnimationHooks.isEnabled(),
+			"enabling module must activate hooks"
+		);
+		check(
+			CrystalAnimationHooks.mode() == CrystalAnimationMode.STATIC,
+			"mode must reflect static mode"
+		);
+
+		module.modeSetting().set(CrystalAnimationMode.SPIN);
+		module.speedSetting().set(2.5);
+		module.offsetXSetting().set(1.2);
+		module.offsetYSetting().set(0.5);
+		module.offsetZSetting().set(-0.8);
+		module.scaleSetting().set(1.5);
+
+		check(
+			CrystalAnimationHooks.mode() == CrystalAnimationMode.SPIN,
+			"mode must reflect spin mode"
+		);
+		check(
+			closeTo(CrystalAnimationHooks.speed(), 2.5),
+			"speed must reflect custom speed"
+		);
+		check(
+			closeTo(CrystalAnimationHooks.offsetX(), 1.2),
+			"offsetX must reflect custom offset"
+		);
+		check(
+			closeTo(CrystalAnimationHooks.offsetY(), 0.5),
+			"offsetY must reflect custom offset"
+		);
+		check(
+			closeTo(CrystalAnimationHooks.offsetZ(), -0.8),
+			"offsetZ must reflect custom offset"
+		);
+		check(
+			closeTo(CrystalAnimationHooks.scale(), 1.5),
+			"scale must reflect custom scale"
+		);
+
+		// Policy tests
+		check(
+			closeTo(CrystalAnimationPolicy.calculateSpinAngle(10.0F, 1.0), 30.0),
+			"policy spin angle at 1.0x must be 3.0 * ageInTicks"
+		);
+		check(
+			closeTo(CrystalAnimationPolicy.calculateSpinAngle(10.0F, 2.5), 75.0),
+			"policy spin angle at 2.5x must scale with speed multiplier"
+		);
+		check(
+			CrystalAnimationPolicy.isStatic(true, CrystalAnimationMode.STATIC),
+			"policy isStatic must be true when enabled and static"
+		);
+		check(
+			!CrystalAnimationPolicy.isStatic(false, CrystalAnimationMode.STATIC),
+			"policy isStatic must be false when disabled"
+		);
+		check(
+			CrystalAnimationPolicy.isSpin(true, CrystalAnimationMode.SPIN),
+			"policy isSpin must be true when enabled and spin"
+		);
+		check(
+			!CrystalAnimationPolicy.isSpin(true, CrystalAnimationMode.STATIC),
+			"policy isSpin must be false when mode is static"
+		);
+		check(
+			closeTo(CrystalAnimationPolicy.fixedYOffset(), -8.8),
+			"fixed Y offset must compensate for model space baseline"
+		);
+		check(
+			closeTo(CrystalAnimationPolicy.toModelUnits(1.0), 8.0),
+			"1 block offset must convert to 8 model units"
+		);
+		check(
+			closeTo(CrystalAnimationPolicy.calculateY(0.0), -8.8),
+			"calculateY with 0 offset must equal fixedYOffset"
+		);
+		check(
+			closeTo(CrystalAnimationPolicy.calculateY(1.0), -16.8),
+			"calculateY with +1.0 offset must raise crystal (decrease model Y)"
+		);
+		check(
+			closeTo(CrystalAnimationPolicy.calculateY(-1.0), -0.8),
+			"calculateY with -1.0 offset must lower crystal (increase model Y)"
+		);
+
+		manager.setEnabled(module.id(), false);
+		check(
+			!CrystalAnimationHooks.isEnabled(),
+			"disabling module must deactivate hooks"
+		);
+	}
+
+	private static void zoomModuleMetadataAndSettings() {
+		ZoomModule module = new ZoomModule();
+		check(
+			module.category().id().equals("render"),
+			"zoom derives from its render package"
+		);
+		check(module.metadata().toggleable(), "zoom must expose a toggle");
+		check(
+			closeTo(module.zoomFactor().value(), 7.5),
+			"default zoom factor must be 7.5"
+		);
+		check(
+			closeTo(module.zoomFactor().minimum(), 1.5),
+			"minimum zoom factor must be 1.5"
+		);
+		check(
+			closeTo(module.zoomFactor().maximum(), 20.0),
+			"maximum zoom factor must be 20.0"
+		);
+		check(
+			closeTo(module.zoomFactor().step(), 0.5),
+			"zoom factor step must be 0.5"
+		);
+		check(module.smoothZoom().value(), "smooth zoom must default to enabled");
+		check(
+			module.reduceSensitivity().value(),
+			"reduce sensitivity must default to enabled"
+		);
+		check(
+			!module.keybind().orElseThrow().value().isBound(),
+			"zoom keybind must default unbound"
+		);
+		check(module.settings().size() == 5, "zoom must declare 5 settings");
+	}
+
+	private static void zoomHooksCalculatesMultipliersAndFollowsLifecycle() {
+		ZoomModule module = new ZoomModule();
+		ModuleManager manager = new ModuleManager();
+		manager.register(module);
+
+		ZoomHooks.resetState();
+		check(
+			closeTo(ZoomHooks.getZoomMultiplier(1.0f), 1.0),
+			"uninstalled hook must return 1.0 multiplier"
+		);
+		check(
+			closeTo(ZoomHooks.getSensitivityMultiplier(), 1.0),
+			"uninstalled hook must return 1.0 sensitivity"
+		);
+
+		ZoomHooks.install(module);
+		check(
+			closeTo(ZoomHooks.getZoomMultiplier(1.0f), 1.0),
+			"disabled module must return 1.0 multiplier"
+		);
+		check(
+			closeTo(ZoomHooks.getSensitivityMultiplier(), 1.0),
+			"disabled module must return 1.0 sensitivity"
+		);
+
+		// Test without smooth zoom (instant)
+		module.smoothZoom().set(false);
+		module.zoomFactor().set(6.0);
+		manager.setEnabled(module.id(), true);
+		check(
+			closeTo(ZoomHooks.getZoomMultiplier(1.0f), 6.0),
+			"enabled module without smooth zoom must immediately return configured factor"
+		);
+		check(
+			closeTo(ZoomHooks.getSensitivityMultiplier(), 1.0 / 6.0),
+			"sensitivity must be reduced by zoom factor"
+		);
+
+		module.reduceSensitivity().set(false);
+		check(
+			closeTo(ZoomHooks.getSensitivityMultiplier(), 1.0),
+			"disabling reduceSensitivity must keep sensitivity at 1.0"
+		);
+		module.reduceSensitivity().set(true);
+
+		manager.setEnabled(module.id(), false);
+		check(
+			closeTo(ZoomHooks.getZoomMultiplier(1.0f), 1.0),
+			"disabling module without smooth zoom must immediately return 1.0"
+		);
+		check(
+			closeTo(ZoomHooks.getSensitivityMultiplier(), 1.0),
+			"disabling module must restore sensitivity to 1.0"
+		);
+
+		// Test with smooth zoom animation
+		module.smoothZoom().set(true);
+		AtomicLong currentTime = new AtomicLong(1000L);
+		ZoomHooks.setTimeSupplierForTesting(currentTime::get);
+
+		ZoomHooks.resetState();
+		manager.setEnabled(module.id(), true);
+
+		// At start of transition (elapsed = 0)
+		check(
+			closeTo(ZoomHooks.getZoomMultiplier(1.0f), 1.0),
+			"at transition start zoom multiplier must be initial value"
+		);
+
+		// Halfway through 150ms transition (75ms elapsed)
+		currentTime.set(1075L);
+		float midMultiplier = ZoomHooks.getZoomMultiplier(1.0f);
+		check(
+			midMultiplier > 1.0f && midMultiplier < 6.0f,
+			"mid-transition multiplier must be between start and target"
+		);
+
+		// After transition finishes (150ms elapsed)
+		currentTime.set(1150L);
+		check(
+			closeTo(ZoomHooks.getZoomMultiplier(1.0f), 6.0),
+			"after transition completes multiplier must equal target factor"
+		);
+		check(
+			closeTo(ZoomHooks.getSensitivityMultiplier(), 1.0 / 6.0),
+			"after transition completes sensitivity must match target factor"
+		);
+
+		// Transition back to 1.0 on disable
+		manager.setEnabled(module.id(), false);
+		check(
+			closeTo(ZoomHooks.getZoomMultiplier(1.0f), 6.0),
+			"at disable transition start multiplier must be at previous value"
+		);
+
+		currentTime.set(1225L);
+		float midDisableMultiplier = ZoomHooks.getZoomMultiplier(1.0f);
+		check(
+			midDisableMultiplier > 1.0f && midDisableMultiplier < 6.0f,
+			"mid-disable multiplier must be between previous and 1.0"
+		);
+
+		currentTime.set(1300L);
+		check(
+			closeTo(ZoomHooks.getZoomMultiplier(1.0f), 1.0),
+			"after disable transition completes multiplier must be 1.0"
+		);
+		check(
+			closeTo(ZoomHooks.getSensitivityMultiplier(), 1.0),
+			"after disable transition completes sensitivity must be 1.0"
+		);
+
+		ZoomHooks.resetTimeSupplierForTesting();
+	}
+
+	private static void moduleNotificationControlsStateChangeMessages() {
+		ModuleManager manager = new ModuleManager();
+		ZoomModule module = new ZoomModule();
+		manager.register(module);
+
+		check(module.notification().value(), "module notification setting must default to true");
+
+		List<String> messages = new java.util.ArrayList<>();
+		MessageBoxApi messageApi = (message, duration) -> messages.add(message.getString());
+
+		ModuleStateMessageNotifier.attach(manager, messageApi);
+
+		// With notification == true, enable and disable trigger messages
+		manager.setEnabled(module.id(), true);
+		check(messages.size() == 1, "enabling with notification=true must emit message");
+		messages.clear();
+
+		manager.setEnabled(module.id(), false);
+		check(messages.size() == 1, "disabling with notification=true must emit message");
+		messages.clear();
+
+		// With notification == false, enable and disable do NOT trigger messages
+		module.notification().set(false);
+
+		manager.setEnabled(module.id(), true);
+		check(messages.isEmpty(), "enabling with notification=false must NOT emit message");
+
+		manager.setEnabled(module.id(), false);
+		check(messages.isEmpty(), "disabling with notification=false must NOT emit message");
+	}
+
+	private static void packetMineModuleMetadataAndSettings() {
+		PacketMineModule module = new PacketMineModule();
+		check(
+			module.category().id().equals("player"),
+			"packet mine derives from its player package"
+		);
+		check(module.metadata().toggleable(), "packet mine must expose a toggle");
+		check(module.settings().size() == 10, "packet mine must declare 10 settings");
+		check(module.delayTicks().value() == 1.0, "delay ticks must default to 1.0");
+		check(module.delayTicks().minimum() == 0.0, "delay ticks min must be 0");
+		check(module.delayTicks().maximum() == 10.0, "delay ticks max must be 10");
+		check(module.range().value() == 3.5, "range must default to 3.5");
+		check(module.range().minimum() == 1.0, "range min must be 1.0");
+		check(module.range().maximum() == 8.0, "range max must be 8.0");
+		check(module.rotationTicks().value() == 2.0, "rotation ticks must default to 2.0");
+		check(module.resetRotationTicks().value() == 4.0, "reset rotation ticks must default to 4.0");
+		check(!module.ghostHand().value(), "ghost hand must default to false");
+		check(module.renderStyle().value() == PacketMineRenderStyle.EXPAND, "render style defaults to EXPAND");
+		check(module.notification().value(), "notification must default to true");
+		check(!module.keybind().orElseThrow().value().isBound(), "shortcut defaults unbound");
+	}
+
+	private static void packetMinePolicyGeometryAndRotationCalculations() {
+		BlockPos pos = new BlockPos(10, 64, 20);
+
+		// Expand box at 0.5 progress -> center (10.5, 64.5, 20.5) +- 0.25
+		PacketMineBox expand = PacketMinePolicy.calculateExpandBox(pos, 0.5f);
+		check(closeTo(expand.minX(), 10.25) && closeTo(expand.maxX(), 10.75), "expand box X bounds");
+		check(closeTo(expand.minY(), 64.25) && closeTo(expand.maxY(), 64.75), "expand box Y bounds");
+		check(closeTo(expand.minZ(), 20.25) && closeTo(expand.maxZ(), 20.75), "expand box Z bounds");
+
+		// Rise box at 0.5 progress -> Y from 64.0 to 64.5
+		PacketMineBox rise = PacketMinePolicy.calculateRiseBox(pos, 0.5f);
+		check(closeTo(rise.minX(), 10.0) && closeTo(rise.maxX(), 11.0), "rise box X bounds");
+		check(closeTo(rise.minY(), 64.0) && closeTo(rise.maxY(), 64.5), "rise box Y bounds");
+		check(closeTo(rise.minZ(), 20.0) && closeTo(rise.maxZ(), 21.0), "rise box Z bounds");
+
+		// Full box -> 10 to 11, 64 to 65, 20 to 21
+		PacketMineBox full = PacketMinePolicy.calculateFullBox(pos);
+		check(closeTo(full.minX(), 10.0) && closeTo(full.maxX(), 11.0), "full box X bounds");
+		check(closeTo(full.minY(), 64.0) && closeTo(full.maxY(), 65.0), "full box Y bounds");
+		check(closeTo(full.minZ(), 20.0) && closeTo(full.maxZ(), 21.0), "full box Z bounds");
+
+		// Reach check
+		Vec3 closeEye = new Vec3(10.5, 65.0, 20.5);
+		check(PacketMinePolicy.isWithinReach(closeEye, pos, 3.0), "close eye position must be within reach");
+		Vec3 farEye = new Vec3(100.0, 64.0, 20.0);
+		check(!PacketMinePolicy.isWithinReach(farEye, pos, 3.0), "far eye position must be outside reach");
+
+		// Aim angle calculation
+		Vec3 eye = new Vec3(0, 0, 0);
+		Vec3 target = new Vec3(0, 0, 5);
+		PacketMinePolicy.AimAngles aim = PacketMinePolicy.calculateAim(eye, target);
+		check(closeTo(aim.pitch(), 0.0), "straight horizontal aim pitch must be 0");
+		check(closeTo(aim.yaw(), 0.0), "straight south aim yaw must be 0");
+
+		// Angle interpolation with wrap-around
+		float interp = PacketMinePolicy.interpolateAngle(350.0f, 10.0f, 0.5f);
+		check(closeTo(interp, 360.0f) || closeTo(interp, 0.0f), "wrap-around interpolation must choose shortest path");
+	}
+
+	private static void settingVisibilityConditionsControlVisibility() {
+		BooleanSetting master = new BooleanSetting("master", "test.master", false);
+		DoubleSetting child = new DoubleSetting("child", "test.child", 5.0, 0.0, 10.0, 1.0)
+			.visibleWhen(master::value);
+
+		check(!child.isVisible(), "child setting must be hidden when master condition is false");
+		master.set(true);
+		check(child.isVisible(), "child setting must become visible when master condition is true");
+		master.set(false);
+		check(!child.isVisible(), "child setting must hide again when master condition is false");
+	}
+
 	private static void autoWebDeclaresConfirmedDefaults() {
 		AutoWebModule module = new AutoWebModule();
 
-		check(module.settings().size() == 11, "auto web must expose every confirmed setting");
-		check(module.targetPriority().value() == TargetPriority.NEAREST, "nearest target must be default");
-		check(module.targetType().value() == TargetType.PLAYER, "players must be the default target type");
+		check(module.settings().size() == 12, "auto web must expose every confirmed setting");
+		check(module.targetPriority().value() == TargetPriority.CROSSHAIR, "crosshair target must be default");
+		check(module.targetType().value() == TargetType.ALL, "all must be the default target type");
 		check(module.placementPattern().value() == PlacementPattern.FEET, "feet-only must be default");
-		check(module.range().value() == 3.0, "range must default to 3 blocks");
-		check(module.rotationTicks().value() == 2.0, "rotation must default to 2 ticks");
+		check(module.range().value() == 4.0, "range must default to 4 blocks");
+		check(module.rotationTicks().value() == 4.7, "rotation must default to 4.7 ticks");
 		check(module.hotbarMode().value() == HotbarMode.SILENT, "silent hotbar switching must be default");
-		check(!module.checkInventory().value(), "inventory search must be opt-in");
+		check(module.checkInventory().value(), "inventory search must be enabled by default");
 		check(
 			module.inventoryMode().value() == InventoryMode.SILENT_SELECTED_RESTORE,
 			"silent selected-slot inventory swap must be default"
@@ -1338,7 +1928,7 @@ public final class LogicTestSuite {
 			module.placementCadence().value() == PlacementCadence.ONE_PER_ROTATION,
 			"natural one-per-rotation placement must be default"
 		);
-		check(module.placementInterval().value() == 1.0, "placement interval must default to 1 tick");
+		check(module.placementInterval().value() == 1.7, "placement interval must default to 1.7 ticks");
 		check(module.keybind().orElseThrow().value().isBound() == false, "shortcut must default unbound");
 	}
 
@@ -2108,5 +2698,731 @@ public final class LogicTestSuite {
 		PLAYER,
 		FRIENDLY,
 		HOSTILE
+	}
+
+	private static void bedAuraModuleMetadataAndSettings() {
+		BedAuraModule module = new BedAuraModule();
+		check(module.category().id().equals("combat"), "bed aura must reside in combat category");
+		check(module.range().value() == 4.5, "range must default to 4.5");
+		check(module.placeInterval().value() == 2.0, "place interval must default to 2.0");
+		check(module.breakInterval().value() == 2.0, "break interval must default to 2.0");
+		check(module.onlyNether().value(), "only nether must default to true");
+		check(module.keybind().isPresent(), "bed aura must declare shortcut");
+	}
+
+	private static void autoTotemPolicyFallDamageAndEquipDecisions() {
+		check(AutoTotemPolicy.calculateFallDamage(10.0, 0.0F, false) == 7.0, "fall damage from 10 blocks without jump boost must be 7.0");
+		check(AutoTotemPolicy.calculateFallDamage(10.0, 2.0F, false) == 5.0, "fall damage with jump boost 2 must be 5.0");
+		check(AutoTotemPolicy.calculateFallDamage(10.0, 0.0F, true) == 0.0, "slow falling must completely negate fall damage");
+		check(AutoTotemPolicy.calculateFallDamage(3.0, 0.0F, false) == 0.0, "fall distance <= 3 blocks must have 0 damage");
+
+		check(AutoTotemPolicy.isCompletelyInvulnerable(5), "resistance level 5 must be invulnerable");
+		check(!AutoTotemPolicy.isCompletelyInvulnerable(4), "resistance level 4 must not be completely invulnerable");
+
+		check(!AutoTotemPolicy.shouldEquipTotem(5.0, 0.0, 0.0, 10.0, 10.0, true, true), "invulnerable state must not equip totem");
+		check(AutoTotemPolicy.shouldEquipTotem(20.0, 0.0, 0.0, 10.0, 10.0, false, false), "onlyOnLowHealth = false must always equip totem");
+		check(AutoTotemPolicy.shouldEquipTotem(8.0, 0.0, 0.0, 10.0, 10.0, true, false), "health <= threshold must equip totem");
+		check(AutoTotemPolicy.shouldEquipTotem(20.0, 0.0, 12.0, 10.0, 10.0, true, false), "fall damage >= threshold must equip totem");
+		check(AutoTotemPolicy.shouldEquipTotem(15.0, 0.0, 8.0, 10.0, 10.0, true, false), "health after fall damage <= threshold must equip totem");
+		check(!AutoTotemPolicy.shouldEquipTotem(20.0, 0.0, 0.0, 10.0, 10.0, true, false), "safe state must not equip totem");
+	}
+
+	private static void autoTotemModuleMetadataAndSettings() {
+		AutoTotemModule module = new AutoTotemModule(MessageBoxApi.noop());
+		check(module.category().id().equals("combat"), "auto totem must reside in combat category");
+		check(module.healthThreshold().value() == 10.0, "health threshold must default to 10.0");
+		check(module.fallDamageThreshold().value() == 10.0, "fall damage threshold must default to 10.0");
+		check(module.delay().value() == 0.0, "delay must default to 0.0");
+		check(module.randomDelay().value() == 0.0, "random delay must default to 0.0");
+		check(module.checkEffects().value(), "check effects must default to true");
+		check(!module.onlyOnLowHealth().value(), "only on low health must default to false");
+		check(module.offhandMode().value() == OffhandMode.SWAP, "offhand mode must default to swap");
+		check(!module.alerts().value(), "alerts must default to false");
+		check(!module.fallbackShield().value(), "fallback shield must default to false");
+	}
+
+	private static void noRenderModuleMetadataAndHooksFollowLifecycle() {
+		ModuleManager manager = new ModuleManager();
+		NoRenderModule module = new NoRenderModule();
+		manager.register(module);
+		NoRenderHooks.install(module);
+
+		check(module.category().id().equals("render"), "no render must reside in render category");
+		check(!module.particles().value(), "particles must default to false");
+		check(module.signText().value(), "sign text must default to true");
+		check(module.maps().value(), "maps must default to true");
+		check(module.bannerPatterns().value(), "banner patterns must default to true");
+		check(module.fire().value(), "fire must default to true");
+		check(module.darkness().value(), "darkness must default to true");
+		check(module.blindness().value(), "blindness must default to true");
+		check(module.keybind().isPresent(), "no render must declare shortcut");
+
+		// Disabled state
+		check(!NoRenderHooks.isEnabled(), "hooks must report disabled when module is disabled");
+		check(!NoRenderHooks.shouldNoRenderParticles(), "particles hook must be false when disabled");
+		check(!NoRenderHooks.shouldNoRenderSignText(), "sign text hook must be false when disabled");
+		check(!NoRenderHooks.shouldNoRenderMaps(), "maps hook must be false when disabled");
+		check(!NoRenderHooks.shouldNoRenderBannerPatterns(), "banner patterns hook must be false when disabled");
+		check(!NoRenderHooks.shouldNoRenderFire(), "fire hook must be false when disabled");
+		check(!NoRenderHooks.shouldNoRenderDarkness(), "darkness hook must be false when disabled");
+		check(!NoRenderHooks.shouldNoRenderBlindness(), "blindness hook must be false when disabled");
+
+		// Enable module
+		manager.setEnabled(module.id(), true);
+		check(NoRenderHooks.isEnabled(), "hooks must report enabled when module is enabled");
+		check(!NoRenderHooks.shouldNoRenderParticles(), "particles hook must be false by default when enabled");
+		check(NoRenderHooks.shouldNoRenderSignText(), "sign text hook must be true when enabled");
+		check(NoRenderHooks.shouldNoRenderMaps(), "maps hook must be true when enabled");
+		check(NoRenderHooks.shouldNoRenderBannerPatterns(), "banner patterns hook must be true when enabled");
+		check(NoRenderHooks.shouldNoRenderFire(), "fire hook must be true when enabled");
+		check(NoRenderHooks.shouldNoRenderDarkness(), "darkness hook must be true when enabled");
+		check(NoRenderHooks.shouldNoRenderBlindness(), "blindness hook must be true when enabled");
+
+		// Toggle particles setting
+		module.particles().set(true);
+		check(NoRenderHooks.shouldNoRenderParticles(), "particles hook must be true when particles setting is true");
+		module.particles().set(false);
+		check(!NoRenderHooks.shouldNoRenderParticles(), "particles hook must be false when particles setting is false");
+		check(NoRenderHooks.shouldNoRenderFire(), "fire hook must still be true");
+
+		// Disable module again
+		manager.setEnabled(module.id(), false);
+		check(!NoRenderHooks.isEnabled(), "hooks must report disabled when module is disabled");
+		check(!NoRenderHooks.shouldNoRenderFire(), "fire hook must be false when disabled");
+	}
+
+	private static void antiQuitModuleMetadataSettingsAndHooksFollowLifecycle() {
+		ModuleManager manager = new ModuleManager();
+		AntiQuitModule module = new AntiQuitModule();
+		manager.register(module);
+		AntiQuitHooks.install(module);
+
+		// Metadata & defaults
+		check(module.category().id().equals("player"), "anti quit must reside in player category");
+		check(module.id().path().equals("anti_quit"), "module id path must be anti_quit");
+		check(module.id().namespace().equals("client"), "module id namespace must be client");
+		check(module.notification().value(), "notification must default to true");
+		check(module.confirmDisconnect().value(), "confirm disconnect must default to true");
+		check(module.confirmWindowClose().value(), "confirm window close must default to true");
+		check(module.keybind().isPresent(), "anti quit must declare shortcut");
+
+		// Disabled state
+		check(!AntiQuitHooks.isEnabled(), "hooks must report disabled when module is disabled");
+		check(!AntiQuitHooks.shouldConfirmDisconnect(), "confirm disconnect hook must be false when disabled");
+		check(!AntiQuitHooks.shouldConfirmWindowClose(), "confirm window close hook must be false when disabled");
+		check(AntiQuitHooks.handleWindowShouldClose(null, null), "window close must proceed when disabled");
+
+		// Enable module
+		manager.setEnabled(module.id(), true);
+		check(AntiQuitHooks.isEnabled(), "hooks must report enabled when module is enabled");
+		check(AntiQuitHooks.shouldConfirmDisconnect(), "confirm disconnect hook must be true when enabled");
+		check(AntiQuitHooks.shouldConfirmWindowClose(), "confirm window close hook must be true when enabled");
+		check(!AntiQuitHooks.handleWindowShouldClose(null, null), "window close must be intercepted when enabled");
+
+		// Toggle individual settings
+		module.confirmDisconnect().set(false);
+		check(!AntiQuitHooks.shouldConfirmDisconnect(), "confirm disconnect hook must be false when setting is false");
+		check(AntiQuitHooks.shouldConfirmWindowClose(), "confirm window close hook must remain true");
+
+		module.confirmWindowClose().set(false);
+		check(!AntiQuitHooks.shouldConfirmWindowClose(), "confirm window close hook must be false when setting is false");
+		check(AntiQuitHooks.handleWindowShouldClose(null, null), "window close must proceed when confirmWindowClose is false");
+
+		// Force quit behavior
+		module.confirmWindowClose().set(true);
+		AntiQuitHooks.setForceQuitting(true);
+		check(AntiQuitHooks.isForceQuitting(), "force quitting state must report true");
+		check(AntiQuitHooks.handleWindowShouldClose(null, null), "window close must proceed when force quitting");
+		AntiQuitHooks.setForceQuitting(false);
+
+		// Disable module
+		manager.setEnabled(module.id(), false);
+		check(!AntiQuitHooks.isEnabled(), "hooks must report disabled after disabling module");
+		check(!AntiQuitHooks.shouldConfirmDisconnect(), "confirm disconnect must be false after disabling");
+		check(!AntiQuitHooks.shouldConfirmWindowClose(), "confirm window close must be false after disabling");
+	}
+
+	private static void flightModuleMetadataSettingsAndPolicyCalculations() {
+		ModuleManager manager = new ModuleManager();
+		FlightModule module = new FlightModule();
+		manager.register(module);
+		FlightHooks.install(module);
+
+		// Metadata & settings
+		check(module.category().id().equals("movement"), "flight must reside in movement category");
+		check(module.id().path().equals("flight"), "module id path must be flight");
+		check(module.id().namespace().equals("client"), "module id namespace must be client");
+		check(module.horizontalSpeed().value() == 1.0, "horizontal speed must default to 1.0");
+		check(module.horizontalSpeed().minimum() == 0.1 && module.horizontalSpeed().maximum() == 10.0,
+			"horizontal speed must range from 0.1 to 10.0");
+		check(module.verticalSpeed().value() == 0.8, "vertical speed must default to 0.8");
+		check(module.verticalSpeed().minimum() == 0.1 && module.verticalSpeed().maximum() == 10.0,
+			"vertical speed must range from 0.1 to 10.0");
+		check(module.spoofGround().value(), "spoof ground must default to true");
+		check(module.notification().value(), "notification must default to true");
+		check(module.keybind().isPresent(), "flight must declare shortcut");
+
+		// FlightPolicy calculations
+		FlightPolicy.Velocity2d zero = FlightPolicy.calculateHorizontalVelocity(0.0f, 0.0f, 0.0f, 1.0);
+		check(zero.x() == 0.0 && zero.z() == 0.0, "zero input must yield zero horizontal velocity");
+
+		FlightPolicy.Velocity2d fwd = FlightPolicy.calculateHorizontalVelocity(0.0f, 1.0f, 0.0f, 1.5);
+		check(closeTo(fwd.x(), 0.0) && closeTo(fwd.z(), 1.5), "forward at yaw 0 must move in +Z");
+
+		FlightPolicy.Velocity2d bwd = FlightPolicy.calculateHorizontalVelocity(0.0f, -1.0f, 0.0f, 1.5);
+		check(closeTo(bwd.x(), 0.0) && closeTo(bwd.z(), -1.5), "backward at yaw 0 must move in -Z");
+
+		FlightPolicy.Velocity2d strafeLeft = FlightPolicy.calculateHorizontalVelocity(0.0f, 0.0f, 1.0f, 1.5);
+		check(closeTo(strafeLeft.x(), 1.5) && closeTo(strafeLeft.z(), 0.0), "strafe left at yaw 0 must move in +X (East)");
+
+		FlightPolicy.Velocity2d strafeRight = FlightPolicy.calculateHorizontalVelocity(0.0f, 0.0f, -1.0f, 1.5);
+		check(closeTo(strafeRight.x(), -1.5) && closeTo(strafeRight.z(), 0.0), "strafe right at yaw 0 must move in -X (West)");
+
+		FlightPolicy.Velocity2d yaw90 = FlightPolicy.calculateHorizontalVelocity(90.0f, 1.0f, 0.0f, 2.0);
+		check(closeTo(yaw90.x(), -2.0) && closeTo(yaw90.z(), 0.0), "forward at yaw 90 must move in -X");
+
+		FlightPolicy.Velocity2d yaw90StrafeLeft = FlightPolicy.calculateHorizontalVelocity(90.0f, 0.0f, 1.0f, 2.0);
+		check(closeTo(yaw90StrafeLeft.x(), 0.0) && closeTo(yaw90StrafeLeft.z(), 2.0), "strafe left at yaw 90 must move in +Z (South)");
+
+		FlightPolicy.Velocity2d diag = FlightPolicy.calculateHorizontalVelocity(0.0f, 1.0f, 1.0f, 2.0);
+		check(closeTo(Math.hypot(diag.x(), diag.z()), 2.0), "diagonal speed must normalize to target speed");
+
+		check(FlightPolicy.calculateVerticalVelocity(true, false, 0.8) == 0.8, "jump must ascend at vertical speed");
+		check(FlightPolicy.calculateVerticalVelocity(false, true, 0.8) == -0.8, "sneak must descend at vertical speed");
+		check(FlightPolicy.calculateVerticalVelocity(true, true, 0.8) == 0.0, "jump + sneak must hover in place");
+		check(FlightPolicy.calculateVerticalVelocity(false, false, 0.8) == 0.0, "no vertical input must hover in place");
+
+		// FlightHooks & Packet Spoofing
+		check(!FlightHooks.isEnabled(), "hooks must report disabled when module is disabled");
+		check(!FlightHooks.shouldSpoofGround(), "spoofGround must report false when module is disabled");
+
+		ServerboundMovePlayerPacket.Pos movePacket = new ServerboundMovePlayerPacket.Pos(10.0, 64.0, 20.0, false, false);
+		check(FlightHooks.processOutgoingPacket(movePacket) == movePacket, "packets must remain unmodified when disabled");
+
+		// Enable module
+		manager.setEnabled(module.id(), true);
+		check(FlightHooks.isEnabled(), "hooks must report enabled when module is enabled");
+		check(FlightHooks.shouldSpoofGround(), "spoofGround must report true when module is enabled");
+
+		// Abilities packet suppression
+		Abilities abilities = new Abilities();
+		abilities.flying = true;
+		ServerboundPlayerAbilitiesPacket abilitiesPacket = new ServerboundPlayerAbilitiesPacket(abilities);
+		check(FlightHooks.processOutgoingPacket(abilitiesPacket) == null, "flying abilities packet must be suppressed");
+
+		// Ground spoofing
+		var processed = FlightHooks.processOutgoingPacket(movePacket);
+		check(processed instanceof ServerboundMovePlayerPacket, "processed packet must be a MovePlayerPacket");
+		check(((ServerboundMovePlayerPacket) processed).isOnGround(), "move packet must be spoofed to onGround = true");
+
+		// Disable spoof ground setting
+		module.spoofGround().set(false);
+		check(!FlightHooks.shouldSpoofGround(), "spoofGround hook must report false when setting is disabled");
+		check(FlightHooks.processOutgoingPacket(movePacket) == movePacket, "packets must not be spoofed when spoofGround is false");
+
+		// Disable module
+		manager.setEnabled(module.id(), false);
+		check(!FlightHooks.isEnabled(), "hooks must report disabled after module disabled");
+	}
+
+	private static void doubleRangeSettingNormalizationAndFractionMath() {
+		// DoubleRange direct checks
+		DoubleRange swapped = new DoubleRange(20.0, 5.0);
+		check(swapped.min() == 5.0 && swapped.max() == 20.0, "DoubleRange must auto-order min and max");
+
+		expectThrows(
+			IllegalArgumentException.class,
+			() -> new DoubleRange(Double.NaN, 10.0),
+			"non-finite values must be rejected"
+		);
+
+		// DoubleRangeSetting checks
+		DoubleRangeSetting setting = new DoubleRangeSetting(
+			"test_range",
+			"client.setting.test_range",
+			5.0,
+			20.0,
+			1.0,
+			100.0,
+			1.0
+		);
+		check(setting.minimum() == 5.0, "setting min must initialize to 5.0");
+		check(setting.maximum() == 20.0, "setting max must initialize to 20.0");
+		check(setting.rangeMinimum() == 1.0, "range min must be 1.0");
+		check(setting.rangeMaximum() == 100.0, "range max must be 100.0");
+		check(setting.step() == 1.0, "step must be 1.0");
+
+		check(closeTo(setting.minFraction(), (5.0 - 1.0) / 99.0), "minFraction calculation");
+		check(closeTo(setting.maxFraction(), (20.0 - 1.0) / 99.0), "maxFraction calculation");
+
+		// Change listeners
+		AtomicLong changeCount = new AtomicLong();
+		setting.addChangeListener(changeCount::incrementAndGet);
+
+		setting.setRange(10.0, 30.0);
+		check(setting.minimum() == 10.0 && setting.maximum() == 30.0, "setRange must update bounds");
+		check(changeCount.get() == 1L, "change listener must fire once");
+
+		// Step alignment & clamp
+		setting.setRange(-5.0, 150.0);
+		check(setting.minimum() == 1.0 && setting.maximum() == 100.0, "out-of-bounds range must clamp to range limits");
+
+		// Setting fractions
+		setting.setMinFraction(0.5);
+		check(setting.minimum() == 51.0, "setMinFraction 0.5 must align to step on [1, 100]");
+
+		// Random sampling
+		setting.setRange(10.0, 15.0);
+		for (int i = 0; i < 50; i++) {
+			double val = setting.randomValue();
+			check(val >= 10.0 && val <= 15.0, "randomValue must be within [10.0, 15.0]");
+		}
+	}
+
+	private static void rangeSliderControlPointerHandling() {
+		DoubleRangeSetting setting = new DoubleRangeSetting(
+			"cps_range",
+			"client.setting.cps_range",
+			10.0,
+			20.0,
+			0.0,
+			100.0,
+			1.0
+		);
+		RangeSliderControl control = new RangeSliderControl(setting);
+		control.layout(new Rect(0, 0, 100, 20));
+
+		check(closeTo(control.minFraction(), 0.1), "initial minFraction must be 0.1");
+		check(closeTo(control.maxFraction(), 0.2), "initial maxFraction must be 0.2");
+
+		// Click closer to MIN (x = 5 => fraction 0.05)
+		InputResult res1 = control.handleInput(new UiInputEvent.PointerPressed(5, 10, MouseButton.LEFT, 0));
+		check(res1 == InputResult.CAPTURE_POINTER, "pointer press must capture pointer");
+		check(control.activeTarget() == RangeSliderControl.DragTarget.MIN, "clicking near min must grab MIN handle");
+		check(setting.minimum() == 5.0, "min value must update to 5.0");
+
+		// Drag MIN to x = 8
+		control.handleInput(new UiInputEvent.PointerDragged(8, 10, 3, 0, MouseButton.LEFT, 0));
+		check(setting.minimum() == 8.0, "dragging must update min value to 8.0");
+
+		// Release pointer
+		control.handleInput(new UiInputEvent.PointerReleased(8, 10, MouseButton.LEFT, 0));
+		check(control.activeTarget() == RangeSliderControl.DragTarget.NONE, "releasing pointer must clear active target");
+
+		// Click closer to MAX (x = 80 => fraction 0.8)
+		control.handleInput(new UiInputEvent.PointerPressed(80, 10, MouseButton.LEFT, 0));
+		check(control.activeTarget() == RangeSliderControl.DragTarget.MAX, "clicking near max must grab MAX handle");
+		check(setting.maximum() == 80.0, "max value must update to 80.0");
+	}
+
+	private static void doubleRangeConfigPersistence() {
+		Path temporaryDirectory = null;
+		try {
+			temporaryDirectory = Files.createTempDirectory("edge-client-range-config-test");
+			Path configPath = temporaryDirectory.resolve("edge-config.json");
+
+			ModuleManager sourceManager = new ModuleManager();
+			TrackingModule sourceModule = sourceManager.register(new TrackingModule("range_test"));
+			DoubleRangeSetting sourceSetting = sourceModule.exposeRegister(
+				new DoubleRangeSetting("cps_range", "client.setting.cps", 5.0, 20.0, 1.0, 100.0, 1.0)
+			);
+			JsonConfigService sourceConfig = new JsonConfigService(sourceManager, configPath);
+			check(sourceConfig.load(), "missing config must initialize cleanly");
+
+			sourceSetting.setRange(12.0, 35.0);
+			check(Files.isRegularFile(configPath), "modifying range setting must write to disk");
+			String json = Files.readString(configPath);
+			check(json.contains("\"min\": 12.0") && json.contains("\"max\": 35.0"),
+				"double range must serialize as JSON object with min and max");
+
+			ModuleManager restoredManager = new ModuleManager();
+			TrackingModule restoredModule = restoredManager.register(new TrackingModule("range_test"));
+			DoubleRangeSetting restoredSetting = restoredModule.exposeRegister(
+				new DoubleRangeSetting("cps_range", "client.setting.cps", 5.0, 20.0, 1.0, 100.0, 1.0)
+			);
+			JsonConfigService restoredConfig = new JsonConfigService(restoredManager, configPath);
+			check(restoredConfig.load(), "config must load successfully");
+			check(restoredSetting.minimum() == 12.0 && restoredSetting.maximum() == 35.0,
+				"range setting min and max must be restored from disk");
+		} catch (IOException error) {
+			throw new AssertionError("double range config persistence failed", error);
+		} finally {
+			if (temporaryDirectory != null) {
+				try {
+					Files.deleteIfExists(temporaryDirectory.resolve("edge-config.json"));
+					Files.deleteIfExists(temporaryDirectory);
+				} catch (IOException ignored) {
+				}
+			}
+		}
+	}
+
+	private static void airPlaceModuleMetadataSettingsAndPolicy() {
+		AirPlaceModule module = new AirPlaceModule();
+		check(module.category().id().equals("player"), "air place module must reside in player category");
+		check(module.range().value() == 4.5, "range must default to 4.5");
+		check(module.swing().value(), "swing must default to true");
+		check(module.direction().value() == AirPlaceDirection.AUTO, "direction must default to AUTO");
+
+		// Policy tests
+		Vec3 eyePos = new Vec3(0.0, 64.0, 0.0);
+		Vec3 lookVec = new Vec3(0.0, 0.0, 1.0);
+		AirPlacePolicy.TargetPlacement target = AirPlacePolicy.calculatePlacement(
+			eyePos,
+			lookVec,
+			4.0,
+			AirPlaceDirection.AUTO,
+			Direction.SOUTH
+		);
+		check(target.blockPos().equals(new BlockPos(0, 64, 4)), "target block pos must be (0, 64, 4)");
+		check(target.direction() == Direction.NORTH, "auto direction looking straight south must face NORTH");
+
+		check(AirPlacePolicy.resolveDirection(AirPlaceDirection.UP, lookVec, Direction.SOUTH) == Direction.UP,
+			"UP direction mode must resolve to UP");
+		check(AirPlacePolicy.resolveDirection(AirPlaceDirection.DOWN, lookVec, Direction.SOUTH) == Direction.DOWN,
+			"DOWN direction mode must resolve to DOWN");
+		check(AirPlacePolicy.resolveDirection(AirPlaceDirection.FACING, lookVec, Direction.SOUTH) == Direction.NORTH,
+			"FACING direction mode must resolve opposite to player facing");
+
+		AABB playerBox = new AABB(0.2, 64.0, 0.2, 0.8, 66.0, 0.8);
+		check(!AirPlacePolicy.isPlacementAllowed(playerBox, new BlockPos(0, 64, 0)),
+			"placement inside player bounding box must be disallowed");
+		check(AirPlacePolicy.isPlacementAllowed(playerBox, new BlockPos(0, 64, 4)),
+			"placement outside player bounding box must be allowed");
+	}
+
+	private static void autoClickerModuleMetadataSettingsAndDualScheduling() {
+		AutoClickerModule module = new AutoClickerModule();
+		check(module.category().id().equals("combat"), "auto clicker must reside in combat category");
+		check(module.leftClick().value(), "left click must default to enabled");
+		check(module.leftCps().minimum() == 8.0 && module.leftCps().maximum() == 14.0, "left CPS defaults to 8-14");
+		check(!module.rightClick().value(), "right click must default to disabled");
+		check(module.rightCps().minimum() == 10.0 && module.rightCps().maximum() == 20.0, "right CPS defaults to 10-20");
+		check(module.holdOnly().value(), "hold only must default to true");
+
+		AutoClickerController controller = new AutoClickerController();
+		check(AutoClickerController.calculateIntervalMs(10.0) == 100L, "10 CPS must equate to 100ms interval");
+		check(AutoClickerController.calculateIntervalMs(20.0) == 50L, "20 CPS must equate to 50ms interval");
+
+		// Disabled check
+		check(!controller.checkAndScheduleLeft(1000L, false, true, true, new DoubleRange(10.0, 10.0)),
+			"disabled left click must not schedule");
+
+		// Hold-only check
+		check(!controller.checkAndScheduleLeft(1000L, true, false, true, new DoubleRange(10.0, 10.0)),
+			"holdOnly=true with holding=false must not schedule");
+
+		// Active scheduling
+		check(controller.checkAndScheduleLeft(1000L, true, true, true, new DoubleRange(10.0, 10.0)),
+			"first left click must trigger immediately");
+		check(controller.nextLeftClickTimeMs() == 1100L, "next left click scheduled for 1100ms");
+		check(!controller.checkAndScheduleLeft(1050L, true, true, true, new DoubleRange(10.0, 10.0)),
+			"subsequent left click before cooldown must not trigger");
+		check(controller.checkAndScheduleLeft(1100L, true, true, true, new DoubleRange(10.0, 10.0)),
+			"left click at cooldown must trigger");
+
+		// Concurrent dual scheduling at the same timestamp
+		check(controller.checkAndScheduleRight(1100L, true, true, true, new DoubleRange(20.0, 20.0)),
+			"right click must trigger independently at the same timestamp");
+		check(controller.nextRightClickTimeMs() == 1150L, "next right click scheduled for 1150ms");
+	}
+
+	private static void cpsTrackerAndHudRendererCalculations() {
+		CpsTracker.reset();
+		long now = 100_000L;
+		java.util.Deque<Long> clicks = new java.util.ArrayDeque<>();
+		clicks.addLast(now - 1200L); // expired
+		clicks.addLast(now - 900L);
+		clicks.addLast(now - 500L);
+		clicks.addLast(now - 100L);
+		check(CpsTracker.calculateCps(clicks, now) == 3, "expired clicks (> 1000ms) must be pruned");
+
+		CpsTracker.recordLeftClick();
+		CpsTracker.recordLeftClick();
+		check(CpsTracker.getLeftCps() >= 2, "recorded left clicks must increment left CPS");
+
+		CpsTracker.recordRightClick();
+		check(CpsTracker.getRightCps() >= 1, "recorded right clicks must increment right CPS");
+
+		CpsTracker.reset();
+		check(CpsTracker.getLeftCps() == 0 && CpsTracker.getRightCps() == 0, "reset must clear CPS queues");
+
+		ClickGuiModule clickGui = new ClickGuiModule();
+		check(clickGui.cpsHudEnabled().value(), "CPS HUD must default to enabled");
+		check(clickGui.cpsHudPosition().value().equals(new HudPosition(0.0, 0.35)), "CPS HUD default position");
+
+		CpsHudRenderer renderer = new CpsHudRenderer(
+			clickGui.cpsHudEnabled(),
+			clickGui.cpsHudPosition(),
+			() -> false
+		);
+		check(renderer.measure().width() > 0 && renderer.measure().height() == 16, "CPS HUD measure must provide valid size");
+	}
+
+	private static void colorSettingHexParsingAndConversion() {
+		ColorSetting setting = new ColorSetting(
+			"test_color",
+			"test.setting.color",
+			0xFFFF0000,
+			false
+		);
+		check(setting.rgb() == 0xFF0000, "initial RGB must be 0xFF0000");
+		check(setting.hex().equals("FF0000"), "hex representation must default without leading hash");
+		check(setting.red() == 255 && setting.green() == 0 && setting.blue() == 0, "channels must be 255, 0, 0");
+
+		// Test setting hex string with '#' - silent strip
+		setting.setFromHex("#00FF00");
+		check(setting.rgb() == 0x00FF00, "setFromHex with '#' must strip hash and set 0x00FF00");
+		check(setting.hex().equals("00FF00"), "hex must be 00FF00");
+		check(setting.green() == 255 && setting.red() == 0, "green channel must be 255");
+
+		// Test setting 3-character hex shorthand
+		setting.setFromHex("00F");
+		check(setting.rgb() == 0x0000FF, "3-digit hex '00F' must expand to 0x0000FF");
+
+		// Test setting 8-character hex on alpha-enabled setting
+		ColorSetting alphaSetting = new ColorSetting(
+			"test_alpha_color",
+			"test.setting.color",
+			0x80FF0000,
+			true
+		);
+		alphaSetting.setFromHex("80FF0000");
+		check(alphaSetting.rgb() == 0xFF0000, "8-digit hex RGB must be 0xFF0000");
+		check(alphaSetting.alpha() == 128, "8-digit hex alpha must be 128");
+
+		// Test presets
+		check(ColorSetting.PRESET_COLORS.size() == 5, "must have 5 preset colors");
+		setting.set(ColorSetting.PRESET_COLORS.get(3));
+		check(setting.rgb() == 0xFFFF00, "preset 3 must be yellow (0xFFFF00)");
+	}
+
+	private static void colorPickerControlHsvMathAndPresets() {
+		ColorSetting setting = new ColorSetting(
+			"picker_test",
+			"test.setting.picker",
+			0xFFFF0000,
+			false
+		);
+		ColorPickerControl control = new ColorPickerControl(setting);
+		control.layout(new Rect(0, 0, 180, 200));
+
+		check(control.hexText().equals("FF0000"), "hex text must be FF0000");
+		check(control.presetColors().size() == 5, "control must expose 5 presets");
+
+		// Test Hue update
+		control.setHue(120.0f); // Green
+		control.setSaturation(1.0f);
+		control.setValue(1.0f);
+		check(setting.rgb() == 0x00FF00, "hue 120 with S=1, V=1 must give green");
+
+		// Test setting from control hex edit
+		control.onHexInputChanged("0000FF");
+		check(setting.rgb() == 0x0000FF, "typing 0000FF must update setting to blue");
+
+		// Test setting with leading '#' silent strip
+		control.onHexInputChanged("#FFFF00");
+		check(setting.rgb() == 0xFFFF00, "typing #FFFF00 must silently strip '#' and update setting");
+	}
+
+	private static void versionHudRendererMetadataAndMeasurements() {
+		BooleanSetting enabled = new BooleanSetting("test_enabled", "test.enabled", true);
+		HudPositionSetting position = new HudPositionSetting("test_pos", "test.pos", new HudPosition(0.0, 0.0));
+		VersionHudRenderer renderer = new VersionHudRenderer(
+			enabled,
+			position,
+			() -> false,
+			"Edge Client v1.0.0"
+		);
+		check(renderer.displayText().equals("Edge Client v1.0.0"), "displayText must match configured text");
+		check(renderer.measure().height() == 16, "measured height must be 16");
+		check(renderer.measure().width() > 0, "measured width must be positive");
+	}
+
+	private static void allRegisteredModulesAndSettingsHaveTranslations() {
+		ModuleManager manager = new ModuleManager();
+		BuiltInModules.register(manager);
+		Map<String, String> zhMap = io.qzz.iie.i18n.ClientI18n.getMap("zh_cn");
+		Map<String, String> enMap = io.qzz.iie.i18n.ClientI18n.getMap("en_us");
+
+		List<String> missingZh = new ArrayList<>();
+		List<String> missingEn = new ArrayList<>();
+
+		for (Module module : manager.modules()) {
+			checkKey(module.metadata().nameTranslationKey(), zhMap, enMap, missingZh, missingEn);
+			checkKey(module.metadata().descriptionTranslationKey(), zhMap, enMap, missingZh, missingEn);
+			checkKey("client.category." + module.category().id(), zhMap, enMap, missingZh, missingEn);
+
+			for (Setting<?> setting : module.settings()) {
+				checkKey(setting.translationKey(), zhMap, enMap, missingZh, missingEn);
+				if (setting instanceof ChoiceSetting<?> choice) {
+					for (ChoiceOption<?> option : choice.options()) {
+						checkKey(option.translationKey(), zhMap, enMap, missingZh, missingEn);
+					}
+				}
+			}
+		}
+
+		if (!missingZh.isEmpty() || !missingEn.isEmpty()) {
+			throw new AssertionError("Missing translation keys!\nZH: " + missingZh + "\nEN: " + missingEn);
+		}
+	}
+
+	private static void checkKey(
+		String key,
+		Map<String, String> zh,
+		Map<String, String> en,
+		List<String> missingZh,
+		List<String> missingEn
+	) {
+		if (key == null || key.isBlank()) return;
+		if (!zh.containsKey(key)) {
+			missingZh.add(key);
+		}
+		if (!en.containsKey(key)) {
+			missingEn.add(key);
+		}
+	}
+
+	private static void freeLookPolicyRotationAndInterpolation() {
+		FreeLookPolicy policy = new FreeLookPolicy();
+		check(!policy.isActive(), "policy starts inactive");
+
+		policy.activate(180.0f, 10.0f);
+		check(policy.isActive(), "policy becomes active");
+		check(closeTo(policy.cameraYaw(), 180.0), "initial yaw is 180");
+		check(closeTo(policy.cameraPitch(), 10.0), "initial pitch is 10");
+
+		policy.tick();
+		policy.turn(10.0, -20.0, false, false);
+		check(closeTo(policy.cameraYaw(), 181.5), "accumulated yaw without invert");
+		check(closeTo(policy.cameraPitch(), 7.0), "accumulated pitch without invert");
+
+		// Test invert yaw and pitch
+		policy.turn(10.0, 10.0, true, true);
+		check(closeTo(policy.cameraYaw(), 180.0), "accumulated yaw with invert");
+		check(closeTo(policy.cameraPitch(), 5.5), "accumulated pitch with invert");
+
+		// Test pitch clamp [-90, 90]
+		policy.turn(0.0, 1000.0, false, false);
+		check(closeTo(policy.cameraPitch(), 90.0), "pitch clamps to 90");
+		policy.turn(0.0, -2000.0, false, false);
+		check(closeTo(policy.cameraPitch(), -90.0), "pitch clamps to -90");
+
+		// Test partial tick interpolation
+		policy.activate(0.0f, 0.0f);
+		policy.tick();
+		policy.turn(100.0, 0.0, false, false); // cameraYaw becomes 15.0f, prev was 0.0f
+		check(closeTo(policy.renderYaw(0.5f), 7.5), "renderYaw at 0.5 partialTicks interpolates halfway");
+
+		// Module metadata and defaults
+		FreeLookModule module = new FreeLookModule();
+		check(module.category().id().equals("render"), "free look derives category render from package");
+		check(module.autoThirdPerson().value(), "auto third person defaults to true");
+		check(!module.holdMode().value(), "hold mode defaults to false");
+		check(module.smoothTransition().value(), "smooth transition defaults to true");
+		check(!module.invertPitch().value(), "invert pitch defaults to false");
+		check(!module.invertYaw().value(), "invert yaw defaults to false");
+		check(module.keybind().isPresent() && !module.keybind().get().value().isBound(), "free look keybind defaults to unbound");
+	}
+
+	private static void copyNbtPolicyDecisionsAndSizeLimits() {
+		// 模块未启用：保持原始输入
+		check(
+			!CopyNbtPolicy.shouldIncludeData(false, true, false, false, 2048, 0, false, null, null),
+			"disabled module must preserve false includeData"
+		);
+		check(
+			CopyNbtPolicy.shouldIncludeData(false, true, true, false, 2048, 0, false, null, null),
+			"disabled module must preserve true includeData"
+		);
+
+		// 非创造模式：保持原始输入
+		check(
+			!CopyNbtPolicy.shouldIncludeData(true, false, false, false, 2048, 0, false, null, null),
+			"non-creative player must preserve false includeData"
+		);
+		check(
+			CopyNbtPolicy.shouldIncludeData(true, false, true, false, 2048, 0, false, null, null),
+			"non-creative player must preserve true includeData"
+		);
+
+		// 创造模式且模块启用：默认允许所有 NBT（limitSize = false, filterBlocks = false）
+		check(
+			CopyNbtPolicy.shouldIncludeData(true, true, false, false, 2048, 999999, false, BlockNbtCategory.CONTAINERS, java.util.Set.of()),
+			"creative mode without limit must allow NBT copying"
+		);
+
+		// 创造模式且开启大小限制：未超出限制时允许
+		check(
+			CopyNbtPolicy.shouldIncludeData(true, true, false, true, 2048, 1024, false, null, null),
+			"creative mode under size limit must allow NBT copying"
+		);
+
+		// 创造模式且开启大小限制：超出限制时拒绝
+		check(
+			!CopyNbtPolicy.shouldIncludeData(true, true, false, true, 2048, 4096, false, null, null),
+			"creative mode exceeding size limit must reject NBT copying"
+		);
+
+		// 创造模式且开启大小限制：未知大小（<=0）允许
+		check(
+			CopyNbtPolicy.shouldIncludeData(true, true, false, true, 2048, 0, false, null, null),
+			"creative mode with unknown size must allow NBT copying"
+		);
+
+		// 开启方块分类过滤：允许的分类复制，未勾选的分类拦截
+		java.util.Set<BlockNbtCategory> allowed = java.util.Set.of(BlockNbtCategory.CONTAINERS, BlockNbtCategory.SPECIAL);
+		check(
+			CopyNbtPolicy.shouldIncludeData(true, true, false, false, 2048, 0, true, BlockNbtCategory.CONTAINERS, allowed),
+			"allowed category must permit NBT copying"
+		);
+		check(
+			!CopyNbtPolicy.shouldIncludeData(true, true, false, false, 2048, 0, true, BlockNbtCategory.REDSTONE, allowed),
+			"disallowed category must reject NBT copying"
+		);
+	}
+
+	private static void copyNbtModuleMetadataAndDefaults() {
+		CopyNbtModule module = new CopyNbtModule();
+		check(module.category().id().equals("player"), "copy nbt must reside in player category");
+		check(!module.limitSize().value(), "limitSize must default to false");
+		check(module.maxSizeKb().value() == 2048.0, "maxSizeKb must default to 2048 KB");
+		check(module.maxSizeKb().minimum() == 1.0, "maxSizeKb minimum must be 1 KB");
+		check(module.maxSizeKb().maximum() == 2048.0, "maxSizeKb maximum must be 2048 KB");
+		check(!module.maxSizeKb().isVisible(), "maxSizeKb must be hidden when limitSize is false");
+
+		// 方块分类过滤与子选项默认值
+		check(!module.filterBlocks().value(), "filterBlocks must default to false");
+		check(!module.allowSpecial().isVisible(), "sub-settings must be hidden when filterBlocks is false");
+		check(!module.allowDecorative().isVisible(), "sub-settings must be hidden when filterBlocks is false");
+		check(!module.allowContainers().isVisible(), "sub-settings must be hidden when filterBlocks is false");
+		check(!module.allowProcessing().isVisible(), "sub-settings must be hidden when filterBlocks is false");
+		check(!module.allowRedstone().isVisible(), "sub-settings must be hidden when filterBlocks is false");
+		check(!module.allowAdvanced().isVisible(), "sub-settings must be hidden when filterBlocks is false");
+		check(!module.allowOther().isVisible(), "sub-settings must be hidden when filterBlocks is false");
+
+		// 开启 filterBlocks 后子选项变为可见
+		module.filterBlocks().set(true);
+		check(module.allowSpecial().isVisible(), "sub-settings must be visible when filterBlocks is true");
+		check(module.allowContainers().isVisible(), "sub-settings must be visible when filterBlocks is true");
+		check(module.allowedCategories().size() == 7, "all categories must be allowed by default");
+
+		// 禁用容器类后 allowedCategories 发生变化
+		module.allowContainers().set(false);
+		check(!module.allowedCategories().contains(BlockNbtCategory.CONTAINERS), "disabled category must not be in allowed set");
+
+		check(module.copyEntityNbt().value(), "copyEntityNbt must default to true");
+		check(module.keybind().isPresent() && !module.keybind().get().value().isBound(), "keybind must default to unbound");
+		check(module.notification().value(), "notification must default to true");
+
+		// 测试生命周期
+		ModuleManager manager = new ModuleManager();
+		manager.register(module);
+		check(!CopyNbtHooks.isEnabled(), "hooks must not be active before module enable");
+		manager.setEnabled(module.id(), true);
+		check(CopyNbtHooks.isEnabled(), "hooks must be active after module enable");
+		manager.setEnabled(module.id(), false);
+		check(!CopyNbtHooks.isEnabled(), "hooks must not be active after module disable");
 	}
 }

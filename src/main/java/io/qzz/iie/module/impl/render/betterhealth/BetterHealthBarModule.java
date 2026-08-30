@@ -20,7 +20,7 @@ public final class BetterHealthBarModule extends Module {
 		new ChoiceSetting<>(
 			"threshold_rows",
 			"client.setting.better_health_bar.threshold_rows",
-			2,
+			1,
 			thresholdOptions()
 		)
 	);
@@ -28,14 +28,14 @@ public final class BetterHealthBarModule extends Module {
 		new HudPositionSetting(
 			"number_position",
 			"client.setting.better_health_bar.number_position",
-			new HudPosition(0.43, 0.88)
+			new HudPosition(0.4978768577494692, 0.5325004840271056)
 		)
 	);
 	private final DoubleSetting numberScale = setting(
 		new DoubleSetting(
 			"number_scale",
 			"client.setting.better_health_bar.number_scale",
-			1.0,
+			1.2,
 			0.5,
 			3.0,
 			0.05

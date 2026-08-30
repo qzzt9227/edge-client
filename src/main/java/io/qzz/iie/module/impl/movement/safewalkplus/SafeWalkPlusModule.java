@@ -21,7 +21,7 @@ public final class SafeWalkPlusModule extends Module {
 		new DoubleSetting(
 			"coverage_threshold",
 			"client.setting.safe_walk_plus.coverage_threshold",
-			60.0,
+			45.0,
 			1.0,
 			100.0,
 			1.0

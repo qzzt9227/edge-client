@@ -28,7 +28,7 @@ public final class AutoIgniteModule extends Module {
 	private final ChoiceSetting<ItemPriority> itemPriority = setting(new ChoiceSetting<>(
 		"item_priority",
 		"client.setting.auto_ignite.item_priority",
-		ItemPriority.FLINT_FIRST,
+		ItemPriority.FIRE_CHARGE_FIRST,
 		List.of(
 			option("flint_first", "priority.flint_first", ItemPriority.FLINT_FIRST),
 			option("fire_charge_first", "priority.fire_charge_first", ItemPriority.FIRE_CHARGE_FIRST),
@@ -39,7 +39,7 @@ public final class AutoIgniteModule extends Module {
 	private final BooleanSetting restoreAfterFlint = setting(new BooleanSetting(
 		"restore_after_flint",
 		"client.setting.auto_ignite.restore_after_flint",
-		true
+		false
 	));
 	private final BooleanSetting cameraFollows = setting(new BooleanSetting(
 		"camera_follows",
@@ -49,7 +49,7 @@ public final class AutoIgniteModule extends Module {
 	private final DoubleSetting rotationTicks = setting(new DoubleSetting(
 		"rotation_ticks",
 		"client.setting.auto_ignite.rotation_ticks",
-		1.0,
+		3.0,
 		1.0,
 		10.0,
 		1.0
@@ -66,7 +66,7 @@ public final class AutoIgniteModule extends Module {
 	private final BooleanSetting strictInteraction = setting(new BooleanSetting(
 		"strict_interaction",
 		"client.setting.auto_ignite.strict_interaction",
-		false
+		true
 	));
 	private final KeybindSetting shortcut = keybind(new KeybindSetting(
 		"keybind",

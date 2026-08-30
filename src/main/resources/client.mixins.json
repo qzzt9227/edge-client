@@ -3,10 +3,26 @@
 	"minVersion": "0.8",
 	"package": "io.qzz.iie.mixin",
 	"client": [
+		"AbstractSignRendererMixin",
 		"AvatarRendererMixin",
+		"BannerRendererMixin",
+		"BannerSpecialRendererMixin",
+		"CameraMixin",
+		"ClientCommonPacketListenerImplMixin",
+		"EndCrystalModelMixin",
+		"EntityRendererMixin",
 		"HudMixin",
 		"ItemEntityRendererMixin",
-		"MouseHandlerMixin"
+		"LightmapRenderStateExtractorMixin",
+		"MapRendererMixin",
+		"MinecraftAccessor",
+		"MinecraftMixin",
+		"MobEffectFogEnvironmentMixin",
+		"MouseHandlerMixin",
+		"MultiPlayerGameModeMixin",
+		"ParticleEngineMixin",
+		"PauseScreenMixin",
+		"ScreenEffectRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
