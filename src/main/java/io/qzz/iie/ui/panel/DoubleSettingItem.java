@@ -49,7 +49,12 @@ public final class DoubleSettingItem implements InlineSettingItem {
 			&& mouseY >= y && mouseY < y + height();
 		String label = io.qzz.iie.i18n.ClientI18n.translate(setting.translationKey()) + ": ";
 		String valStr = formatValue(setting.value(), setting.step());
-		int availableWidth = width - 8;
+		int indentOffset = indent() * 6;
+		if (indentOffset > 0) {
+			painter.fill(x + 2 + indentOffset - 3, y + 2, 1, height() - 4, ClickGuiTheme.PANEL_BORDER);
+		}
+		int availableWidth = width - 8 - indentOffset;
+		int textX = x + 4 + indentOffset;
 		int textY = y + 1;
 
 		painter.marqueeTwoPartText(
@@ -57,7 +62,7 @@ public final class DoubleSettingItem implements InlineSettingItem {
 			ClickGuiTheme.SETTING_TEXT,
 			valStr,
 			ClickGuiTheme.SLIDER_FILL,
-			x + 4,
+			textX,
 			textY,
 			availableWidth,
 			hovered,
@@ -65,9 +70,9 @@ public final class DoubleSettingItem implements InlineSettingItem {
 		);
 
 		// Slider track and filled bar (moved down by 5px to avoid text overlap)
-		int trackX = x + 4;
+		int trackX = x + 4 + indentOffset;
 		int trackY = y + 15;
-		int trackWidth = Math.max(4, width - 8);
+		int trackWidth = Math.max(4, width - 8 - indentOffset);
 		int trackHeight = 3;
 
 		painter.fill(trackX, trackY, trackWidth, trackHeight, ClickGuiTheme.SLIDER_TRACK);
@@ -127,8 +132,9 @@ public final class DoubleSettingItem implements InlineSettingItem {
 	}
 
 	private void updateValueFromMouse(double mouseX, int x, int width) {
-		int trackX = x + 4;
-		int trackWidth = Math.max(1, width - 8);
+		int indentOffset = indent() * 6;
+		int trackX = x + 4 + indentOffset;
+		int trackWidth = Math.max(1, width - 8 - indentOffset);
 		double ratio = Math.clamp((mouseX - trackX) / (double) trackWidth, 0.0, 1.0);
 		double range = setting.maximum() - setting.minimum();
 		double raw = setting.minimum() + ratio * range;

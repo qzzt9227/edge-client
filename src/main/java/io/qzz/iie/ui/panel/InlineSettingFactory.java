@@ -9,6 +9,7 @@ import io.qzz.iie.setting.ColorSetting;
 import io.qzz.iie.setting.DoubleRangeSetting;
 import io.qzz.iie.setting.DoubleSetting;
 import io.qzz.iie.setting.EditorSetting;
+import io.qzz.iie.setting.FoldSetting;
 import io.qzz.iie.setting.KeybindSetting;
 import io.qzz.iie.setting.Setting;
 import net.minecraft.client.gui.screens.Screen;
@@ -32,6 +33,9 @@ public final class InlineSettingFactory {
 	}
 
 	public InlineSettingItem create(Setting<?> setting) {
+		if (setting instanceof FoldSetting fold) {
+			return new FoldSettingItem(fold);
+		}
 		if (setting instanceof BooleanSetting bool) {
 			return new BooleanSettingItem(bool);
 		}

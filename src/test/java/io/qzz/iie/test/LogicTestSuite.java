@@ -2748,47 +2748,114 @@ public final class LogicTestSuite {
 		NoRenderHooks.install(module);
 
 		check(module.category().id().equals("render"), "no render must reside in render category");
-		check(!module.particles().value(), "particles must default to false");
-		check(module.signText().value(), "sign text must default to true");
-		check(module.maps().value(), "maps must default to true");
-		check(module.bannerPatterns().value(), "banner patterns must default to true");
-		check(module.fire().value(), "fire must default to true");
-		check(module.darkness().value(), "darkness must default to true");
-		check(module.blindness().value(), "blindness must default to true");
 		check(module.keybind().isPresent(), "no render must declare shortcut");
 
-		// Disabled state
-		check(!NoRenderHooks.isEnabled(), "hooks must report disabled when module is disabled");
-		check(!NoRenderHooks.shouldNoRenderParticles(), "particles hook must be false when disabled");
-		check(!NoRenderHooks.shouldNoRenderSignText(), "sign text hook must be false when disabled");
-		check(!NoRenderHooks.shouldNoRenderMaps(), "maps hook must be false when disabled");
-		check(!NoRenderHooks.shouldNoRenderBannerPatterns(), "banner patterns hook must be false when disabled");
-		check(!NoRenderHooks.shouldNoRenderFire(), "fire hook must be false when disabled");
-		check(!NoRenderHooks.shouldNoRenderDarkness(), "darkness hook must be false when disabled");
-		check(!NoRenderHooks.shouldNoRenderBlindness(), "blindness hook must be false when disabled");
+		// 默认折叠与默认项状态
+		check(!module.particlesGroup().value(), "particles group must default to collapsed");
+		check(!module.staticUiGroup().value(), "static UI group must default to collapsed");
+		check(!module.effectsGroup().value(), "effects group must default to collapsed");
+		check(!module.animationsGroup().value(), "animations group must default to collapsed");
 
-		// Enable module
+		// 初始级联可见性校验 (父折叠项为 false 时子项必须不可见)
+		check(!module.particleExplosion().isVisible(), "child setting must be invisible when parent group is collapsed");
+		check(!module.itemFrames().isVisible(), "child setting must be invisible when parent group is collapsed");
+
+		// 展开粒子组并测试可见性级联
+		module.particlesGroup().set(true);
+		check(module.particleExplosion().isVisible(), "child setting must become visible when parent group is expanded");
+		module.particlesGroup().set(false);
+		check(!module.particleExplosion().isVisible(), "child setting must hide again when parent group is collapsed");
+
+		// 三级折叠级联测试
+		module.staticUiGroup().set(true);
+		check(!module.itemFrames().isVisible(), "itemFrames must be hidden when subgroupStaticEntities is collapsed");
+		module.subgroupStaticEntities().set(true);
+		check(module.itemFrames().isVisible(), "itemFrames must be visible when both groups are expanded");
+
+		// 禁用状态下所有 Hook 必须返回 false / 默认值
+		check(!NoRenderHooks.isEnabled(), "hooks must report disabled when module is disabled");
+		check(!NoRenderHooks.shouldNoRenderParticle("minecraft:explosion"), "particle hook must be false when disabled");
+		check(!NoRenderHooks.shouldNoRenderItemFrames(), "item frames hook must be false when disabled");
+		check(!NoRenderHooks.shouldNoRenderPlayerNameTags(), "player name tags hook must be false when disabled");
+		check(!NoRenderHooks.shouldNoRenderWeather(), "weather hook must be false when disabled");
+		check(!NoRenderHooks.shouldFreezeSpriteAnimation("minecraft:block/water_flow"), "water freeze hook must be false when disabled");
+		check(NoRenderHooks.getGlobalFogDistance() == 1.0, "default fog distance must be 1.0");
+
+		// 启用模块
 		manager.setEnabled(module.id(), true);
 		check(NoRenderHooks.isEnabled(), "hooks must report enabled when module is enabled");
-		check(!NoRenderHooks.shouldNoRenderParticles(), "particles hook must be false by default when enabled");
-		check(NoRenderHooks.shouldNoRenderSignText(), "sign text hook must be true when enabled");
-		check(NoRenderHooks.shouldNoRenderMaps(), "maps hook must be true when enabled");
-		check(NoRenderHooks.shouldNoRenderBannerPatterns(), "banner patterns hook must be true when enabled");
-		check(NoRenderHooks.shouldNoRenderFire(), "fire hook must be true when enabled");
-		check(NoRenderHooks.shouldNoRenderDarkness(), "darkness hook must be true when enabled");
-		check(NoRenderHooks.shouldNoRenderBlindness(), "blindness hook must be true when enabled");
 
-		// Toggle particles setting
-		module.particles().set(true);
-		check(NoRenderHooks.shouldNoRenderParticles(), "particles hook must be true when particles setting is true");
-		module.particles().set(false);
-		check(!NoRenderHooks.shouldNoRenderParticles(), "particles hook must be false when particles setting is false");
-		check(NoRenderHooks.shouldNoRenderFire(), "fire hook must still be true");
+		// 1. 粒子效果测试
+		check(!NoRenderHooks.shouldNoRenderParticle("minecraft:explosion"), "default particles must not be blocked");
+		module.particleExplosion().set(true);
+		check(NoRenderHooks.shouldNoRenderParticle("minecraft:explosion"), "explosion particle must be blocked");
+		check(NoRenderHooks.shouldNoRenderParticle("minecraft:sonic_boom"), "sonic boom particle must be blocked");
+		check(!NoRenderHooks.shouldNoRenderParticle("minecraft:heart"), "heart particle must not be blocked");
 
-		// Disable module again
+		// 自定义粒子黑名单测试
+		module.particleCustomBlacklist().toggle("custom_mod:magic_spark");
+		check(NoRenderHooks.shouldNoRenderParticle("custom_mod:magic_spark"), "custom blacklisted particle must be blocked");
+		module.particleCustomBlacklist().toggle("custom_mod:magic_spark");
+		check(!NoRenderHooks.shouldNoRenderParticle("custom_mod:magic_spark"), "untoggled particle must not be blocked");
+
+		// 2. 静态实体与界面测试
+		module.itemFrames().set(true);
+		module.armorStands().set(true);
+		module.paintings().set(true);
+		module.playerNameTags().set(true);
+		module.itemFrameNameTags().set(true);
+		module.beaconBeams().set(true);
+		module.enchantingTableBooks().set(true);
+		module.movingPistons().set(true);
+		module.underwaterLavaOverlay().set(true);
+
+		check(NoRenderHooks.shouldNoRenderItemFrames(), "item frames must be blocked");
+		check(NoRenderHooks.shouldNoRenderArmorStands(), "armor stands must be blocked");
+		check(NoRenderHooks.shouldNoRenderPaintings(), "paintings must be blocked");
+		check(NoRenderHooks.shouldNoRenderPlayerNameTags(), "player name tags must be blocked");
+		check(NoRenderHooks.shouldNoRenderItemFrameNameTags(), "item frame name tags must be blocked");
+		check(NoRenderHooks.shouldNoRenderBeaconBeams(), "beacon beams must be blocked");
+		check(NoRenderHooks.shouldNoRenderEnchantingTableBooks(), "enchanting books must be blocked");
+		check(NoRenderHooks.shouldNoRenderMovingPistons(), "moving pistons must be blocked");
+		check(NoRenderHooks.shouldNoRenderUnderwaterLavaOverlay(), "underwater/lava overlay must be blocked");
+
+		// 3. 物效测试
+		module.globalFogDistance().set(4.0);
+		module.fogOverworld().set(true);
+		module.fogNether().set(true);
+		module.fogEnd().set(true);
+		module.weather().set(true);
+		module.sky().set(true);
+		module.biomeColors().set(true);
+
+		check(NoRenderHooks.getGlobalFogDistance() == 4.0, "global fog distance must update");
+		check(NoRenderHooks.shouldNoRenderOverworldFog(), "overworld fog must be blocked");
+		check(NoRenderHooks.shouldNoRenderNetherFog(), "nether fog must be blocked");
+		check(NoRenderHooks.shouldNoRenderEndFog(), "end fog must be blocked");
+		check(NoRenderHooks.shouldNoRenderWeather(), "weather must be blocked");
+		check(NoRenderHooks.shouldNoRenderSky(), "sky must be blocked");
+		check(NoRenderHooks.shouldNoRenderBiomeColors(), "biome colors must be blocked");
+
+		// 4. 动画测试
+		module.animationWater().set(true);
+		module.animationLava().set(true);
+		module.animationFire().set(true);
+		module.animationPortals().set(true);
+		module.animationSculkSensors().set(true);
+
+		check(NoRenderHooks.shouldFreezeSpriteAnimation("minecraft:block/water_still"), "water still must freeze");
+		check(NoRenderHooks.shouldFreezeSpriteAnimation("minecraft:block/water_flow"), "water flow must freeze");
+		check(NoRenderHooks.shouldFreezeSpriteAnimation("minecraft:block/lava_flow"), "lava flow must freeze");
+		check(NoRenderHooks.shouldFreezeSpriteAnimation("minecraft:block/fire_0"), "fire must freeze");
+		check(NoRenderHooks.shouldFreezeSpriteAnimation("minecraft:block/nether_portal"), "portal must freeze");
+		check(NoRenderHooks.shouldFreezeSpriteAnimation("minecraft:block/sculk_sensor_tendril_active"), "sculk sensor must freeze");
+		check(!NoRenderHooks.shouldFreezeSpriteAnimation("minecraft:block/stone"), "stone must not freeze");
+
+		// 再次禁用模块
 		manager.setEnabled(module.id(), false);
 		check(!NoRenderHooks.isEnabled(), "hooks must report disabled when module is disabled");
-		check(!NoRenderHooks.shouldNoRenderFire(), "fire hook must be false when disabled");
+		check(!NoRenderHooks.shouldNoRenderItemFrames(), "hooks must be false when module disabled");
+		check(!NoRenderHooks.shouldFreezeSpriteAnimation("minecraft:block/water_still"), "freeze hook must be false when module disabled");
 	}
 
 	private static void antiQuitModuleMetadataSettingsAndHooksFollowLifecycle() {

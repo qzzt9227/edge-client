@@ -22,6 +22,11 @@ public interface InlineSettingItem {
 		return s == null || s.isVisible();
 	}
 
+	default int indent() {
+		Setting<?> s = setting();
+		return s != null ? s.indent() : 0;
+	}
+
 	void render(
 		UiPainter painter,
 		int x,

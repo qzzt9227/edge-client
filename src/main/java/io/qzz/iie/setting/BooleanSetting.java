@@ -1,6 +1,6 @@
 package io.qzz.iie.setting;
 
-public final class BooleanSetting extends Setting<Boolean> {
+public class BooleanSetting extends Setting<Boolean> {
 	public BooleanSetting(String id, String translationKey, boolean defaultValue) {
 		super(id, translationKey, defaultValue);
 	}

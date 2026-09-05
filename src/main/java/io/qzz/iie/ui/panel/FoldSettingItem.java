@@ -1,35 +1,41 @@
 package io.qzz.iie.ui.panel;
 
-import io.qzz.iie.setting.BooleanSetting;
+import io.qzz.iie.setting.FoldSetting;
 import io.qzz.iie.ui.render.UiPainter;
 import io.qzz.iie.ui.theme.ClickGuiTheme;
-import net.minecraft.network.chat.Component;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class BooleanSettingItem implements InlineSettingItem {
-	private final BooleanSetting setting;
+/**
+ * 可折叠分组设置的内联 UI 渲染项。
+ *
+ * <p>展示带折叠箭头指示器的分组标题栏，点击即可切换展开/折叠。</p>
+ */
+public final class FoldSettingItem implements InlineSettingItem {
+	private static final int ITEM_HEIGHT = 12;
 
-	public BooleanSettingItem(BooleanSetting setting) {
+	private final FoldSetting setting;
+
+	public FoldSettingItem(FoldSetting setting) {
 		this.setting = Objects.requireNonNull(setting, "setting");
 	}
 
 	@Override
-	public BooleanSetting setting() {
+	public FoldSetting setting() {
 		return setting;
 	}
 
 	@Override
 	public int height() {
-		return 11;
+		return ITEM_HEIGHT;
 	}
 
 	@Override
 	public int preferredWidth(UiPainter painter) {
-		String label = io.qzz.iie.i18n.ClientI18n.translate(setting.translationKey()) + ": ";
-		String valStr = setting.value() ? "true" : "false";
-		return painter.textWidth(label) + painter.textWidth(valStr) + 8;
+		String label = (setting.value() ? "▼ " : "▶ ")
+			+ io.qzz.iie.i18n.ClientI18n.translate(setting.translationKey());
+		return painter.textWidth(label) + 8 + indent() * 6;
 	}
 
 	@Override
@@ -45,34 +51,30 @@ public final class BooleanSettingItem implements InlineSettingItem {
 	) {
 		boolean hovered = mouseX >= x && mouseX <= x + width
 			&& mouseY >= y && mouseY < y + height();
-		String label = io.qzz.iie.i18n.ClientI18n.translate(setting.translationKey()) + ": ";
-		String valStr = setting.value() ? "true" : "false";
-		int valColor = setting.value() ? ClickGuiTheme.SETTING_TRUE : ClickGuiTheme.SETTING_FALSE;
+
+		if (hovered) {
+			painter.fill(x, y, width, height(), ClickGuiTheme.MODULE_HOVER);
+		}
+
 		int indentOffset = indent() * 6;
 		if (indentOffset > 0) {
 			painter.fill(x + 2 + indentOffset - 3, y + 2, 1, height() - 4, ClickGuiTheme.PANEL_BORDER);
 		}
-		int availableWidth = width - 8 - indentOffset;
+
+		String arrow = setting.value() ? "▼ " : "▶ ";
+		String text = arrow + io.qzz.iie.i18n.ClientI18n.translate(setting.translationKey());
 		int textX = x + 4 + indentOffset;
 		int textY = y + 1;
+		int availableWidth = width - 8 - indentOffset;
 
-		painter.marqueeTwoPartText(
-			label,
-			ClickGuiTheme.SETTING_TEXT,
-			valStr,
-			valColor,
-			textX,
-			textY,
-			availableWidth,
-			hovered,
-			time
-		);
+		int textColor = hovered ? ClickGuiTheme.TEXT_PRIMARY : ClickGuiTheme.TEXT_SECONDARY;
+		painter.marqueeText(text, textX, textY, availableWidth, textColor, hovered, time);
 	}
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int y, int width) {
 		if (mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY < y + height()) {
-			if (button == 0) {
+			if (button == 0 || button == 1) {
 				setting.set(!setting.value());
 				return true;
 			}

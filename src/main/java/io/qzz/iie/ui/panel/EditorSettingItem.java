@@ -52,7 +52,12 @@ public final class EditorSettingItem implements InlineSettingItem {
 			&& mouseY >= y && mouseY < y + height();
 		String label = io.qzz.iie.i18n.ClientI18n.translate(setting.translationKey()) + ": ";
 		String action = "[Edit]";
-		int availableWidth = width - 8;
+		int indentOffset = indent() * 6;
+		if (indentOffset > 0) {
+			painter.fill(x + 2 + indentOffset - 3, y + 2, 1, height() - 4, ClickGuiTheme.PANEL_BORDER);
+		}
+		int availableWidth = width - 8 - indentOffset;
+		int textX = x + 4 + indentOffset;
 		int textY = y + 1;
 
 		painter.marqueeTwoPartText(
@@ -60,7 +65,7 @@ public final class EditorSettingItem implements InlineSettingItem {
 			ClickGuiTheme.SETTING_TEXT,
 			action,
 			ClickGuiTheme.SETTING_ACTION,
-			x + 4,
+			textX,
 			textY,
 			availableWidth,
 			hovered,

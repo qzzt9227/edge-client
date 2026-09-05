@@ -56,7 +56,9 @@ import io.qzz.iie.ui.screen.HudEditorScreen;
 import io.qzz.iie.module.impl.gui.clickgui.HudEditorSetting;
 import io.qzz.iie.ui.setting.SettingEditorManager;
 import io.qzz.iie.ui.screen.AutoLibrarianTargetEditorScreen;
+import io.qzz.iie.ui.screen.ParticleListEditorScreen;
 import io.qzz.iie.module.impl.player.autolibrarian.EnchantmentTargetsSetting;
+import io.qzz.iie.module.impl.render.norender.ParticleBlacklistSetting;
 import io.qzz.iie.api.setting.SettingEditorApi;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -337,6 +339,17 @@ public final class ClientRuntime {
 					);
 				}
 				return new AutoLibrarianTargetEditorScreen(targets, parent);
+			}
+		);
+		settingEditors.register(
+			ParticleBlacklistSetting.EDITOR_ID,
+			(setting, parent) -> {
+				if (!(setting instanceof ParticleBlacklistSetting blacklist)) {
+					throw new IllegalArgumentException(
+						"Particle blacklist editor requires ParticleBlacklistSetting"
+					);
+				}
+				return new ParticleListEditorScreen(blacklist, parent);
 			}
 		);
 	}

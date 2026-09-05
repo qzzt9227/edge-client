@@ -10,6 +10,7 @@ public abstract class Setting<T> {
 	private final T defaultValue;
 	private final List<Runnable> changeListeners = new ArrayList<>();
 	private java.util.function.BooleanSupplier visiblePredicate = () -> true;
+	private int indent;
 	private T value;
 
 	protected Setting(String id, String translationKey, T defaultValue) {
@@ -67,6 +68,19 @@ public abstract class Setting<T> {
 
 	public final boolean isVisible() {
 		return visiblePredicate.getAsBoolean();
+	}
+
+	public final int indent() {
+		return indent;
+	}
+
+	@SuppressWarnings("unchecked")
+	public final <S extends Setting<T>> S indent(int indent) {
+		if (indent < 0) {
+			throw new IllegalArgumentException("indent must be non-negative: " + indent);
+		}
+		this.indent = indent;
+		return (S) this;
 	}
 
 	protected abstract T normalize(T requestedValue);
